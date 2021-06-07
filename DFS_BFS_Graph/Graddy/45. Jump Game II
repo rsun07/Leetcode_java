@@ -1,0 +1,41 @@
+// 2020 10月的解法
+
+class Solution {
+    // Greedy Algorithm is applicable because the restriction on this question
+    // nums[i] means the max jump CAN do
+    // I can jump any 0-nums[i] step
+    // If it's MUST jump nums[i], then backtrack or DP must apply
+    public int jump(int[] nums) {
+        if (nums == null || nums.length < 2) {
+            return 0;
+        }
+        
+        int curMax = nums[0], nextMax = nums[0], jump = 1;
+        for (int i = 1; i < nums.length; i++) {
+            if (curMax < i) {
+                jump++;
+                curMax = nextMax;
+            }
+            nextMax = Math.max(nextMax, i + nums[i]);
+        }
+        return jump;
+    }
+}
+
+//  2021年1月
+class Solution {
+    public int jump(int[] nums) {
+        if (nums == null || nums.length < 2) {
+            return 0;
+        }
+        int maxIndex = 0, nextMaxIndex = 0, count = 0;
+        for (int i = 0; i < nums.length && maxIndex < nums.length; i++) {
+            if (maxIndex < i) {
+                maxIndex = nextMaxIndex;
+                count++;
+            }
+            nextMaxIndex = Math.max(nextMaxIndex, i + nums[i]);
+        }
+        return count;
+    }
+}

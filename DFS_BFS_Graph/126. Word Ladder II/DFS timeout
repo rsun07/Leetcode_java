@@ -1,0 +1,75 @@
+// 一开始没看清题目要求，要找的是shortest的，这个方法可以找出来所有的
+class Solution {
+            
+    public List<List<String>> findLadders(String beginWord, String endWord, List<String> wordList) {
+        List<List<String>> output = new ArrayList<>();
+        Map<String, List<String>> transfers = buildGraph(beginWord, wordList);
+        dfs(beginWord, endWord, new HashSet<String>(), new ArrayList<String>(), transfers, output);
+        return getShortest(output);
+    }
+    
+    private void dfs(String word, String target, Set<String> visited, List<String> path, Map<String, List<String>> transfers, List<List<String>> output) {
+        path.add(word);
+        visited.add(word);
+        if (word.equals(target)) {
+            output.add(new ArrayList<String>(path));
+        } else {
+            for (String nextWord : transfers.get(word)) {
+                if (!path.contains(nextWord)) {
+                    dfs(nextWord, target, visited, path, transfers, output);
+                }
+            }
+        }
+        path.remove(path.size()-1);
+        visited.remove(word);
+    }
+    
+    // here we use List rather than Set, because we don't need to check contains, so List is faster as Set need to calcualte hash
+    private Map<String, List<String>> buildGraph(String beginWord, List<String> wordList) {
+        Map<String, List<String>> transfers = new HashMap<>();
+        // adding beginWord to the list could make code easier, but it will build some unnecessary link. e.g. word in wordList to beginWord
+        Set<String> wordSet = new HashSet<>(), visited = new HashSet<>();
+        for (String word : wordList) {
+            wordSet.add(word);
+        }
+        transfers.put(beginWord, getAdjList(beginWord, wordSet));
+        for (String word : wordList) {
+            transfers.put(word, getAdjList(word, wordSet));
+        }
+        return transfers;
+    }
+    
+    private List<String> getAdjList(String word, Set<String> wordSet) {
+        char[] chars = word.toCharArray();
+        List<String> adjList = new ArrayList<>();
+        for (int j = 0; j < chars.length; j++) {
+            char originChar = chars[j];
+            for (char c = 'a'; c <= 'z'; c++) {
+                if (c == originChar) {
+                    continue;
+                }
+                chars[j] = c;
+                String newWord = String.valueOf(chars);
+                if (wordSet.contains(newWord)) {
+                    adjList.add(newWord);
+                }
+            }
+            chars[j] = originChar;
+        }
+        return adjList;
+    }
+    
+    private List<List<String>> getShortest(List<List<String>> lists) {
+        int minLen = Integer.MAX_VALUE;
+        for (List<String> list : lists) {
+            minLen = Math.min(minLen, list.size());
+        }
+        List<List<String>> output = new ArrayList<>();
+        for (List<String> list : lists) {
+            if (list.size() == minLen) {
+                output.add(list);
+            }
+        }
+        return output;
+    }
+}

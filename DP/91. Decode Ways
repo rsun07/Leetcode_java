@@ -1,0 +1,22 @@
+// 比较容易错的一道题。算是Math， String和DP结合的题目。我在local run的时候，没看清题目要求，其实错了。特别注意以下一些test case，"0123"， "126010" 这两个都要return 0， 因为没有合理的排序。我是歪打正着碰到了，其实写的时候没有仔细考虑。
+
+class Solution {
+    public int numDecodings(String s) {
+        if (s == null || s.length() == 0) {
+            return 0;
+        }
+        int preTwo = 1, preNum = Character.getNumericValue(s.charAt(0)), pre = preNum == 0 ? 0 : 1;
+        for (int i = 1; i < s.length(); i++) {
+            int digit = Character.getNumericValue(s.charAt(i));
+            int cur = digit == 0 ? 0 : pre;
+            int twoDigits = preNum * 10 + digit;
+            if (twoDigits >= 10 && twoDigits <= 26) {
+                cur += preTwo;
+            }
+            preNum = digit;
+            preTwo = pre;
+            pre = cur;
+        }
+        return pre;
+    }
+}

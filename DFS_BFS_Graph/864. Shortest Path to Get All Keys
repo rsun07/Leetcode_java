@@ -1,0 +1,66 @@
+// 这题的关键在于，要知道，当手上拿到不同的key的情况下，是不同的state。我想到了一个例子，如下。这种情况要走三步，而不是BFS简单的1步。看了答案才知道用如下的解法。有人用bit 方法来存state，会更快。但是我不知道怎么做。我这里用TreeSet，最主要的是在visited， equals的时候，需要是有序的。也有人用StringBuilder来存，因为拿到锁的顺序永远是固定的，用BFS的话。锁只会更多，不会更少。如果确定每一把锁只有一个，则可以有优化的解法。不要太纠结，我觉得能写出来这样，已经不错了。
+
+class Solution {
+    public int shortestPathAllKeys(String[] grid) {
+        int n = grid.length, m = grid[0].length(), startX = 0, startY = 0;
+        TreeSet<Character> targetKeys = new TreeSet<>();
+        for (int x = 0; x < n; x++) {
+            for (int y = 0; y < m; y++) {
+                char c = grid[x].charAt(y);
+                if (Character.isLowerCase(c)) {
+                    targetKeys.add(c);
+                } else if (c == '@') {
+                    startX = x;
+                    startY = y;
+                }
+            }
+        } 
+        
+        int[][] moves = new int[][]{{-1,0}, {0, -1}, {0, 1}, {1, 0}};
+        
+        Set<String> visited = new HashSet<>();
+        Queue<State> queue = new LinkedList<>();
+        int steps = 0;
+        State startState = new State(startX, startY, new TreeSet<>());
+        queue.add(startState);
+        visited.add(startState.toString());
+        while (!queue.isEmpty()) {
+            int levelSize = queue.size();
+            while (levelSize-- > 0) {
+                State state = queue.poll();
+                if (state.keys.equals(targetKeys)) return steps;
+                for (int[] move : moves) {
+                    int nextX = state.x + move[0], nextY = state.y + move[1];
+                    if (nextX < 0 || nextY < 0 || nextX >= n || nextY >= m) continue;
+                    char c = grid[nextX].charAt(nextY);
+                    if (c == '#' || Character.isUpperCase(c) && !state.keys.contains(Character.toLowerCase(c))) continue;
+                    TreeSet<Character> newKeys = new TreeSet<>(state.keys);
+                    if (Character.isLowerCase(c)) {    
+                        newKeys.add(c);
+                    }
+                    State nextState = new State(nextX, nextY, newKeys);
+                    if (!visited.contains(nextState.toString())) {
+                        queue.offer(nextState);
+                        visited.add(nextState.toString());
+                    }
+                }
+            }
+            steps++;
+        }
+        return -1;
+    }
+    
+    private class State {
+        int x, y;
+        TreeSet<Character> keys;
+        State(int x, int y, TreeSet<Character> keys) {
+            this.x = x;
+            this.y = y;
+            this.keys = keys;
+        }
+        
+        public String toString() {
+            return x + "," + y + "," + keys.toString();
+        }
+    }
+}

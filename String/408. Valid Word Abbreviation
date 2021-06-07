@@ -1,0 +1,51 @@
+// 非常容易错的一个点，数字可以是多位数。我在这个点已经错了好几次了。
+// 付费题
+/*
+Given a non-empty string s and an abbreviation abbr, return whether the string matches with the given abbreviation.
+
+A string such as "word" contains only the following valid abbreviations:
+
+["word", "1ord", "w1rd", "wo1d", "wor1", "2rd", "w2d", "wo2", "1o1d", "1or1", "w1r1", "1o2", "2r1", "3d", "w3", "4"]
+Notice that only the above abbreviations are valid abbreviations of the string "word". Any other string is not a valid abbreviation of "word".
+
+Note:
+Assume s contains only lowercase letters and abbr contains only lowercase letters and digits.
+
+Example 1:
+
+Given s = "internationalization", abbr = "i12iz4n":
+
+Return true.
+Example 2:
+
+Given s = "apple", abbr = "a2e":
+
+Return false.
+*/
+
+class Solution {
+    public boolean validWordAbbreviation(String word, String abbr) {
+        int wi = 0, ai = 0;
+        while (wi < word.length() && ai < abbr.length()) {
+            if (Character.isDigit(abbr.charAt(ai))) {
+                int num = 0;
+                // 这里也要特别注意，要检查出界。
+                while (ai < abbr.length() && Character.isDigit(abbr.charAt(ai))) {
+                    int digit = Character.getNumericValue(abbr.charAt(ai++));
+                    // 这个是为了对付傻逼test case，什么['a', '01']
+                    if (num == 0 && digit == 0) {
+                        return false;
+                    }
+                    num = num * 10 + digit;
+                }
+                wi += num;
+            } else {
+                if (word.charAt(wi++) != abbr.charAt(ai++)) {
+                    return false;
+                }
+            }
+        }
+        // 去掉任意一个都不行，"hi"，"hi1"  还有 "word", "10"
+        return wi == word.length() && ai == abbr.length();
+    }
+}

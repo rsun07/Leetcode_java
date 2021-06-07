@@ -1,0 +1,174 @@
+// 难题，FB面经里出现过。
+
+// Union find 的解法，非常容易出错，很多细节。最终会超时
+class Solution {
+    
+    private int[][] moves = new int[][]{{-1,0},{0,-1},{1,0},{0,1}};
+    
+    public int largestIsland(int[][] grid) {
+        // input validation
+        int n = grid.length;
+        UnionFind uf = new UnionFind(n, grid);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 1) {
+                    dfs(i, j, i, j, n, grid, uf, new boolean[n][n]);
+                }
+            }
+        }
+        int maxLand = uf.getMaxCount();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 0) {
+                    int localMax = 1;
+                    Set<Integer> roots = new HashSet<>();
+                    for (int[] move : moves) {
+                        int ni = i + move[0], nj = j + move[1];
+                        if (ni >= 0 && nj >= 0 && ni < n && nj < n && grid[ni][nj] == 1) {
+                            int index = ni*n+nj, root = uf.root(index);
+                            if (!roots.contains(root)) {
+                                localMax += uf.getCount(root);
+                                roots.add(root);
+                            }
+                        }
+                    }
+                    maxLand = Math.max(maxLand, localMax);
+                }
+            }
+        }
+        return maxLand;
+    }
+    
+    private void dfs(int preI, int preJ, int i, int j, int n, int[][] grid, UnionFind uf, boolean[][] visited) {
+        if (i < 0 || j < 0 || i >= n || j >= n || visited[i][j] || grid[i][j] != 1) return;
+        uf.union(preI*n+preJ, i*n+j);
+        visited[i][j] = true;
+        for (int[] move : moves) {
+            dfs(i, j, i+move[0], j+move[1], n, grid, uf, visited);
+        }
+    }
+    
+    private class UnionFind {
+        int n, maxCount;
+        int[] id, count;
+        
+        UnionFind(int n, int[][] grid) {
+            this.n = n;
+            this.maxCount = 0;
+            this.id = new int[n*n];
+            for (int i = 0; i < n*n; i++) {
+                id[i] = i;
+            }
+            this.count = new int[n*n];
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (grid[i][j] == 1) {
+                        maxCount = 1;
+                        count[i*n+j] = 1;
+                    }
+                }
+            }
+        }
+        
+        public int root(int i) {
+            // System.out.println(Arrays.toString(id));
+            // System.out.println(Arrays.toString(count));
+            // System.out.println();
+            while (id[i] != i) {
+                id[i] = id[id[i]];
+                i = id[i];
+            }
+            return i;
+        }
+        
+        public boolean isConnected(int p, int q) {
+            if (root(p) == root(q)) return true;
+            return false;
+        } 
+        
+        public int getCount(int root) {
+            return count[root];
+        }
+        
+        public int getMaxCount() {
+            return maxCount;
+        }
+        
+        public void union(int p, int q) {
+            int rootP = root(p), rootQ = root(q);
+            if (rootP == rootQ) return;
+            if (count[rootP] > count[rootQ]) {
+                id[rootQ] = rootP;
+                count[rootP] += count[rootQ];
+                maxCount = Math.max(maxCount, count[rootP]);
+            } else {
+                id[rootP] = rootQ;
+                count[rootQ] += count[rootP];
+                maxCount = Math.max(maxCount, count[rootQ]);
+            }
+        }
+    }
+}
+
+
+// 非常难，非常麻烦，非常容易出错的N^2 解
+class Solution {
+    public int largestIsland(int[][] grid) {
+        int[][] moves = new int[][]{{-1,0},{0,-1},{1,0},{0,1}};
+        int n = grid.length;
+        int[][] groups = new int[n][n];
+        // index is group id, starting from 1
+        List<Integer> counts = new ArrayList<>();
+        // index start from 0, as groupId 0 is reversed to indicate non-visited group
+        counts.add(0);
+        // bfs
+        int groupId = 0;
+        int largestIsland = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 1 && groups[i][j] == 0) {
+                    groupId++;
+                    Queue<int[]> queue = new LinkedList<>();
+                    int count = 0;
+                    queue.offer(new int[]{i, j});
+                    groups[i][j] = groupId;
+                    while (!queue.isEmpty()) {
+                        int[] coor = queue.poll();
+                        int x = coor[0], y = coor[1];
+                        count++;
+                        for (int[] move : moves) {
+                            int nx = x + move[0], ny = y + move[1];
+                            if (nx >= 0 && ny >= 0 && nx < n && ny < n && grid[nx][ny] == 1 && groups[nx][ny] == 0) {
+                                queue.offer(new int[]{nx, ny});
+                                groups[nx][ny] = groupId;
+                            }
+                        }
+                    }
+                    counts.add(count);
+                    largestIsland = Math.max(largestIsland, count);
+                }
+            }
+        }
+        
+        if (largestIsland >= n*n) return largestIsland;
+        if (largestIsland >= n*n-1) return largestIsland+1;
+        
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 0) {
+                    Set<Integer> visitedGroup = new HashSet<>();
+                    int localMax = 1;
+                    for (int[] move : moves) {
+                        int x = i+move[0], y = j+move[1];
+                        if (x >= 0 && y >= 0 && x < n && y < n && grid[x][y] == 1 && !visitedGroup.contains(groups[x][y])) {
+                            localMax += counts.get(groups[x][y]);
+                            visitedGroup.add(groups[x][y]);
+                        }
+                    }
+                    largestIsland = Math.max(largestIsland, localMax);
+                }
+            }
+        }
+        return largestIsland;
+    }
+}

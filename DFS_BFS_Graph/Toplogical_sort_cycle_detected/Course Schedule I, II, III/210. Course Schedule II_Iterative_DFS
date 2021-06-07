@@ -1,0 +1,48 @@
+// 注意graph的向，和DFS的顺序，和最后输出顺序的关系
+// 我再2020年3月的解法里面，graph的顺序和这里的反的，等于是先找到最后要上的课，然后往前找先修课，这样index从0开始，DFS的顺序是上课的反顺序。
+// 下面的解法，graph是从先修课指向后修课，DFS从先修课往后找，先output没有后修课的课，所以output反过来才是题目需要的答案。
+
+class Solution {
+    public int[] findOrder(int numCourses, int[][] prerequisites) {
+        Map<Integer, List<Integer>> graph = new HashMap<>();
+        for (int[] prereq : prerequisites) {
+            int course = prereq[0], preCourse = prereq[1];
+            if (!graph.containsKey(preCourse)) {
+                graph.put(preCourse, new ArrayList<>());
+            }
+            graph.get(preCourse).add(course);
+        }
+        Stack<Integer> stack = new Stack<>();
+        // DFS reverse order is topological order
+        int index = numCourses-1;
+        int[] output = new int[numCourses];
+        boolean[] visited = new boolean[numCourses], visiting = new boolean[numCourses];
+        for (int i = 0; i < numCourses; i++) {
+            stack.push(i);
+        }
+        while (!stack.isEmpty()) {
+            int course = stack.pop();
+            if (visited[course]) {
+                continue;
+            }
+            if (visiting[course] || !graph.containsKey(course)) {
+                visiting[course] = false;
+                visited[course] = true;
+                output[index--] = course;
+            } else {
+                visiting[course] = true;
+                stack.push(course);
+                for (int nextCourse : graph.get(course)) {
+                    if (visiting[nextCourse]) {
+                        return new int[0];
+                    }
+                    if (visited[nextCourse]) {
+                        continue;
+                    }
+                    stack.push(nextCourse);
+                }
+            }
+        }
+        return output;
+    }
+}

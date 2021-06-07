@@ -1,0 +1,89 @@
+// 易错题，在于题目给的例子有可能误导新手。可能会觉得，只要一直往右走，右边null往左走就行。不需要遍历整棵树。看下面的反例
+/*                         1
+                          / \
+                         2   3
+                        / \   \
+                       4   5   6
+                      /   /
+                     7    8
+                    /
+                   9
+*/
+// 必须遍历整棵树，得到最后的结论，[1,3,6,8,9]
+
+// 方法1：level order traversal
+class Solution {
+    public List<Integer> rightSideView(TreeNode root) {
+        List<Integer> output = new ArrayList<>();
+        Queue<TreeNode> queue = new LinkedList<>();
+        if (root != null) {
+            queue.offer(root);
+        }
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            TreeNode node = null;
+            for (int i = 0; i < size; i++) {
+                node = queue.remove();
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+            // redundant but for safety
+            if (node != null) {
+                output.add(node.val);
+            }
+        }
+        return output;
+    }
+}
+
+// 解法2：坐标法。行不通，按照下面的坐标标注方法，当一棵树很大很深的时候，可能会造成右边比左边左边更小的错误。
+// [1,2,3,4,5,6,7,8,9,10,11,12]， 这样一棵树，11的坐标是(3,1), 12的坐标是(3,-1)。实际上12在11的右边。树越深，这样的错误越明显。
+class Solution {
+    public List<Integer> rightSideView(TreeNode root) {
+        List<Integer> output = new ArrayList<>(), coords = new ArrayList<>();
+        search(root, 0, 0, coords, output);
+        return output;
+    }
+    
+    private void search(TreeNode root, int level, int coord, List<Integer> coords, List<Integer> output) {
+        if (root == null) {
+            return;
+        }
+        if (level == output.size()) {
+            output.add(root.val);
+            coords.add(coord);
+        } else if (coords.get(level) <= coord) {
+            coords.set(level, coord);
+            output.set(level, root.val);
+        }
+        search(root.left, level+1, coord-1, coords, output);
+        search(root.right, level+1, coord+1, coords, output);
+    }
+}
+
+// 解法3： 受到解法2的启发。因为traversal的时候，永远是先左后右。则每次都更新该level的数值，最后一个更新的，一定是最右边的.
+// 也可以有解法4，就是先右后左，这时候不需要else，直接level == output.size()的时候更新就行，因为永远是先到最右边的。
+class Solution {
+    public List<Integer> rightSideView(TreeNode root) {
+        List<Integer> output = new ArrayList<>();
+        search(root, 0, output);
+        return output;
+    }
+    
+    private void search(TreeNode root, int level, List<Integer> output) {
+        if (root == null) {
+            return;
+        }
+        if (level == output.size()) {
+            output.add(root.val);
+        } else {
+            output.set(level, root.val);
+        }
+        search(root.left, level+1, output);
+        search(root.right, level+1, output);
+    }
+}

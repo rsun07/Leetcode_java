@@ -1,0 +1,85 @@
+// 又是另一个类型的题目。两种解法。
+
+// 解法1，找规律。其实也算dp的解法。当nums是空的时候，就只有一种subsets, 就是[]。当nums有一个数字1的时候，就是在空的基础上，在加上[[], [1]], 当nums加上一个数字2，则在之前的基础上，每一个都加上2，变成[[], [1],[2],[1,2]], 加上3同理。
+// 去重。去重跟普通的backtrack没太大区别，就是一定要记住先排序，因为排序之后才有前后相等的关系，判断是否重复。去重有两个注意的重点，第一是，当有两个2的时候，不能有重复。不能出现两次在[]或者[1]后面加2的情况。与此同时，不能完全略过第二个2，因为[1,2,2]是合法的输出，必须保留。怎么办呢？就是要保留两个状态。一个是在还没有出现任何2时候的状态，另一个则是[1,2]这个状态，第二个2出现，第三个2出现后，不能在任何出现2以前的状态加2，这样会重复。只能在另一个状态，即加过2以后的subsets后面加2，构成[1,2,2] 这样的新结果。如果有3个2，则只能在已经加了2个2的所有subsets后面加2，构成[1,2,2,2],[2,2,2] 这样的subsets。在任何之前的状态后面加2，都会造成重复。
+
+class Solution {
+    public List<List<Integer>> subsetsWithDup(int[] nums) {
+        List<List<Integer>> subsets = new ArrayList<>();
+        subsets.add(new ArrayList<>());
+        if (nums == null || nums.length == 0) {
+            return subsets;
+        }
+        Arrays.sort(nums);
+        List<List<Integer>> preSubsets = new ArrayList<>();
+        for (int i = 0; i < nums.length; i++) {
+            if (i == 0 || nums[i] != nums[i-1]) {
+                preSubsets = subsets;
+            }
+            List<List<Integer>> curSubsets = new ArrayList<>();
+            for (List<Integer> subset : preSubsets) {
+                List<Integer> newSubset = new ArrayList<>(subset);
+                newSubset.add(nums[i]);
+                curSubsets.add(newSubset);
+            }
+            preSubsets = curSubsets;
+            subsets.addAll(curSubsets);
+        }
+        return subsets;
+    }
+}
+
+
+// backtrack的解法，在主函数里多了一个for循环，来表示长度
+class Solution {
+    public List<List<Integer>> subsetsWithDup(int[] nums) {
+        List<List<Integer>> subsets = new ArrayList<>();
+        subsets.add(new ArrayList<>());
+        if (nums == null || nums.length == 0) {
+            return subsets;
+        }
+        Arrays.sort(nums);
+        for (int len = 1; len <= nums.length; len++) {
+            backtrack(0, nums, len, new ArrayList<Integer>(), subsets);
+        }
+        return subsets;
+    }
+    
+    private void backtrack(int i, int[] nums, int len, List<Integer> subset, List<List<Integer>> subsets) {
+        if (subset.size() == len) {
+            subsets.add(new ArrayList<>(subset));
+            return;
+        }
+        for (int j = i; j < nums.length; j++) {
+            // 这里是重点也是易错点。当j=i的时候是不能略过的。否则会出现[1,2,2]被跳过。但是之后再出现2的时候，就要略过，否则会重复。
+            if (j > 0 && j != i && nums[j] == nums[j-1]) continue;
+            subset.add(nums[j]);
+            backtrack(j+1, nums, len, subset, subsets);
+            subset.remove(subset.size()-1);
+        }
+    }
+}
+
+// 其实可以简化。不需要硬性规定subset的size，来循环。而是直接路过的都留下。
+class Solution {
+    public List<List<Integer>> subsetsWithDup(int[] nums) {
+        List<List<Integer>> subsets = new ArrayList<>();
+        subsets.add(new ArrayList<>());
+        if (nums == null || nums.length == 0) {
+            return subsets;
+        }
+        Arrays.sort(nums);
+        backtrack(0, nums, new ArrayList<Integer>(), subsets);
+        return subsets;
+    }
+    
+    private void backtrack(int i, int[] nums, List<Integer> subset, List<List<Integer>> subsets) {
+        for (int j = i; j < nums.length; j++) {
+            if (j > 0 && j != i && nums[j] == nums[j-1]) continue;
+            subset.add(nums[j]);
+            subsets.add(new ArrayList<>(subset));
+            backtrack(j+1, nums, subset, subsets);
+            subset.remove(subset.size()-1);
+        }
+    }
+}

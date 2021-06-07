@@ -1,0 +1,103 @@
+// 对题目理解错误，我以为，这种情况也是可以的。上0必须上1，上1必须上0，上0必须上2，上1必须上2。那么先上2，再上0和1就行。这是不对的，应该是0有必要课程2和1，1有必要课程2和0，这种情况是无法上完所有课的。我错就错在，误以为只要有一门先修课就可以下一门课，而事实上，要凑齐所有的先修课才行。
+
+class Solution {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        boolean[] hasPreReq = new boolean[numCourses];
+        Map<Integer, List<Integer>> graph = new HashMap<>();
+        for (int[] prereq : prerequisites) {
+            int course = prereq[0], preCourse = prereq[1];
+            hasPreReq[course] = true;
+            if (!graph.containsKey(preCourse)) {
+                graph.put(preCourse, new ArrayList<>());
+            }
+            graph.get(preCourse).add(course);
+        }
+        // BFS
+        Queue<Integer> queue = new LinkedList<>();
+        boolean[] taken = new boolean[numCourses];
+        for (int i = 0; i < numCourses; i++) {
+            if (!hasPreReq[i]) {
+                queue.offer(i);
+            }
+        }
+        
+        while(!queue.isEmpty()) {
+            int course = queue.poll();
+            if (taken[course]) {
+                continue;
+            }
+            taken[course] = true;
+            for (int nextCourse : graph.getOrDefault(course, Collections.emptyList())) {
+                queue.offer(nextCourse);
+            }
+        }
+        
+        for (boolean courseTaken : taken) {
+            if (!courseTaken) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+
+// 犯了跟上面一样的错误。就是以为从没有pre request的course开始DFS，就可以查出结果，问题是，如果有环，则可能错过搜索这个环，而误返回true。
+// 其实很容易改正这个，就是加一个count，最后不是返回true，而是return count == numCourses。
+// 这种解法的思路其实就是拓扑排序，我想起来，普林斯顿老头说过，DFS倒过来，就是拓扑排序。
+class Solution {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        Map<Integer, List<Integer>> graph = new HashMap<>();
+        boolean[] hasPrereq = new boolean[numCourses];
+        for (int[] prereq : prerequisites) {
+            int course = prereq[0], preCourse = prereq[1];
+            hasPrereq[course] = true;
+            if (!graph.containsKey(preCourse)) {
+                graph.put(preCourse, new ArrayList<>());
+            }
+            graph.get(preCourse).add(course);
+        }
+        boolean[] visited = new boolean[numCourses], visiting = new boolean[numCourses];
+        Stack<Integer> stack = new Stack<>();
+
+        // DFS cycle detect
+        // here, each node starts an DFS, it's not a generic DFS. Another way to find DFS start points is to have a boolean array, find those courses that doin't have prerequest
+        for (int i = 0; i < numCourses; i++) {
+            if (!hasPrereq[i]) {
+                stack.push(i);
+            }
+        }
+        // all courses has pre request, which means no start point, no course can be taken initially
+        // Must add this check before the while loop, otherwise it will skip the while loop and return true at the last line.
+        if (stack.isEmpty()) {
+            return false;
+        }
+
+        while (!stack.isEmpty()) {
+            int course = stack.pop();
+            if (visited[course]) {
+                continue;
+            }
+            // When pop the visiting node here, meaning finished all it's subsedences, DFS finished for this node
+            // Or this node is pop first time, however, no more DFS to go
+            if (visiting[course] || !graph.containsKey(course)) {
+                visiting[course] = false;
+                visited[course] = true;
+            } else {
+                // push it back as a sign of this node's DFS finish. Or we can use stack.peek() above to avoid this push back. Then we need pop it when visited and visiting it.
+                stack.push(course);
+                visiting[course] = true;
+                // graph must contains key course here
+                for (int nextCourse : graph.get(course)) {
+                    if (visiting[nextCourse]) {
+                        return false;
+                    }
+                    if (!visited[nextCourse]) {
+                        stack.push(nextCourse);
+                    }
+                }
+            }
+        }
+        return true;
+    }
+}

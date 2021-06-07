@@ -1,0 +1,31 @@
+// 这一题需要特别小心，易错。跟205. Isomorphic Strings类似，只是这里换成了char 对应 String
+// 易错1： 只考虑了 char to String，没考虑 String to char。例子：abba，"s s s s"
+// 易错2： String也可能只是一个char。这一点是在Leetcode的例子里面的错误。他居然用一个没有generic的HashMap，相当于key是object。这一点是不太好的。而我这里把char转成String用，就要考虑word可能只有一个char的情况，两者会混淆。
+// 易错3： 那么多年java，我第一次知道，就是在下面!map.get(c).equals(map.get(word)), Integer超过128不能用==要用equals，或者把他们assign成两个int用==比较。具体参考 https://www.polarxiong.com/archives/Java-Integer%E7%94%A8-%E6%AF%94%E8%BE%83%E6%97%B6127%E7%9B%B8%E7%AD%89128%E4%B8%8D%E7%9B%B8%E7%AD%89%E7%9A%84%E5%8E%9F%E5%9B%A0.html
+
+class Solution {
+    public boolean wordPattern(String pattern, String s) {
+        // input validation
+        Map<String, Integer> map = new HashMap<>();
+        String[] words = s.split(" ");
+        if (pattern.length() != words.length) {
+            return false;
+        }
+        for (int i = 0; i < words.length; i++) {
+            // cannot convert char to c directly, because word could be also char, will mess things up
+            String c = pattern.charAt(i) + " ";
+            String word = words[i];
+            if (!map.containsKey(c)) {
+                map.put(c, i);
+            }
+            if (!map.containsKey(word)) {
+                map.put(word, i);
+            }
+            // Java Integer auto box cache [-128,127]. when i >= 128, Integer(128) == Integer(128) returns false
+            if (!map.get(c).equals(map.get(word))) {
+                return false;
+            }
+        }
+        return true;
+    }
+}

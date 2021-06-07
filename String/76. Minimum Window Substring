@@ -1,0 +1,116 @@
+// 非常经典的双指针解法。如果Ascii code，English char的话，用256作为array的长度就行了 
+
+// 用HashMap做
+class Solution {
+    public String minWindow(String s, String t) {
+        if (s == null || t == null) {
+            return "";
+        }
+        Map<Character, Integer> targetCharToCount = new HashMap<>();
+        for (char c : t.toCharArray()) {
+            targetCharToCount.put(c, targetCharToCount.getOrDefault(c, 0) + 1);
+        }
+        int lo = 0, hi = 0, outputLo = 0, outputHi = s.length()+1;
+        Map<Character, Integer> charToCount = new HashMap<>();
+        while (hi < s.length()) {
+            while (hi < s.length() && !isQualify(charToCount, targetCharToCount)) {
+                char c = s.charAt(hi++);
+                charToCount.put(c, charToCount.getOrDefault(c, 0) + 1);
+            }
+            // in this line, hi is always +1 than the last char's index which added into Map
+            while(lo <= hi && isQualify(charToCount, targetCharToCount)) {
+                if (hi - lo < outputHi - outputLo) {
+                    outputHi = hi;
+                    outputLo = lo;
+                }
+                char c = s.charAt(lo++);
+                // should always contains c as it must be added before
+                charToCount.put(c, charToCount.get(c) - 1);
+            }
+        }
+        return outputHi > s.length() ? "" : s.substring(outputLo, outputHi);
+    }
+    
+    private boolean isQualify(Map<Character, Integer> charToCount, Map<Character, Integer> targetCharToCount) {
+        for (Map.Entry<Character, Integer> entry : targetCharToCount.entrySet()) {
+            if (!charToCount.containsKey(entry.getKey()) || charToCount.get(entry.getKey()) < entry.getValue()) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+// 用 256 的array做. 时间从上面的124ms降低到57ms。可以优化，让array短一点，可能更快一点。A的ascii是65，z是122。让所有的char-'A'， 只需要57为length的 (这样就只要13ms)。还可以再加一个count，当count小于targetCount的时候，就直接return false；
+class Solution {
+    public String minWindow(String s, String t) {
+        if (s == null || t == null) {
+            return "";
+        }
+        int[] dictT = new int[256], dictS = new int[256];
+        for (char c : t.toCharArray()) {
+            dictT[c]++;
+        }
+        int lo = 0, hi = 0, outputLo = 0, outputHi = s.length()+1;
+        while (hi < s.length()) {
+            while (hi < s.length() && !isQualify(dictT, dictS)) {
+                dictS[s.charAt(hi++)]++;
+            }
+            // in this line, hi is always +1 than the last char's index which added into Map
+            while(lo <= hi && isQualify(dictT, dictS)) {
+                if (hi - lo < outputHi - outputLo) {
+                    outputHi = hi;
+                    outputLo = lo;
+                }
+                dictS[s.charAt(lo++)]--;
+            }
+        }
+        return outputHi > s.length() ? "" : s.substring(outputLo, outputHi);
+    }
+    
+    private boolean isQualify(int[] dictT, int[] dictS) {
+        for (int i = 0; i < dictT.length; i++) {
+            if (dictS[i] < dictT[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+}.
+
+
+// 另一种用hashmap做的办法，用count和t.length 作比较，确保有效长度。只需要7ms
+class Solution {
+    public String minWindow(String s, String t) {
+        if (s == null || t == null) {
+            return "";
+        }
+        Map<Character, Integer> charToCount = new HashMap<>(), subStrCharToCount = new HashMap<>();
+        for (char c : t.toCharArray()) {
+            charToCount.put(c, charToCount.getOrDefault(c, 0) + 1);
+        }
+        int lo = 0, hi = 0, outputLo = 0, outputHi = s.length()+1, count = 0;
+        while (hi < s.length()) {
+            while (hi < s.length() && count < t.length()) {
+                char c = s.charAt(hi++);
+                if (!charToCount.containsKey(c)) continue;
+                int charCount = subStrCharToCount.getOrDefault(c, 0);
+                // 有效char
+                if (charCount < charToCount.get(c)) count++;
+                subStrCharToCount.put(c, charCount + 1);
+            }
+            while(lo <= hi && count >= t.length()) {
+                if (hi - lo < outputHi - outputLo) {
+                    outputHi = hi;
+                    outputLo = lo;
+                }
+                char c = s.charAt(lo++);
+                if (!charToCount.containsKey(c)) continue;
+                int charCount = subStrCharToCount.getOrDefault(c, 0);
+                if (charCount <= charToCount.get(c)) count--;
+                subStrCharToCount.put(c, charCount - 1);
+            }
+        }
+        return outputHi - outputLo > s.length() ? "" : s.substring(outputLo, outputHi);
+    }
+}

@@ -1,0 +1,72 @@
+// 这道题，很难想思路。
+
+// O n的解法倒是不难，brute force和位运算
+class Solution {
+    public int singleNonDuplicate(int[] nums) {
+        int res = 0;
+        for (int num : nums) {
+            res = res ^ num;
+        }
+        return res;
+    }
+}
+
+class Solution {
+    public int singleNonDuplicate(int[] nums) {
+        for (int i = 0; i < nums.length - 1; i+=2) {
+            if (nums[i] != nums[i+1])
+                return nums[i];
+        }
+        return nums[nums.length - 1];
+    }
+}
+
+// 要求binary search，我怎么也想不到如何让每次搜索后减半。看答案才知道，因为有唯一一个奇数个，在这个数字出现之前，都是奇数位的数字等于偶数位的，两两出现。在这个数字出现之后，变成了偶数位的数字等于奇数位的数字。所以通过这样的特点，可以每次减半，知道target在某一半边。
+// 带入例子看着写[1,1,2,3,3,4,4,8,8]
+
+class Solution {
+    public int singleNonDuplicate(int[] nums) {
+        int lo = 0, hi = nums.length - 1;
+        while (lo < hi) {
+            int mid = lo + (hi - lo) / 2;
+            if (mid % 2 == 0) {
+                // mid+1 must exist because lo < hi
+                if (nums[mid] == nums[mid+1]) {
+                    lo = mid + 1;
+                } else if (mid > 0 && nums[mid] == nums[mid-1]) {
+                    hi = mid - 1;
+                } else {
+                    return nums[mid];
+                }
+            } else {
+                if (nums[mid] == nums[mid+1]) {
+                    hi = mid - 1;
+                } else if (nums[mid] == nums[mid-1]) {
+                    lo = mid + 1;
+                } else {
+                    return nums[mid];
+                }
+            }
+        }
+        return nums[lo];
+    }
+}
+
+// 只搜索偶数位
+class Solution {
+    public int singleNonDuplicate(int[] nums) {
+        int lo = 0, hi = nums.length - 1;
+        while (lo < hi) {
+            int mid = lo + (hi - lo) / 2;
+            if (mid % 2 != 0) mid--;
+            if (nums[mid] == nums[mid+1]) {
+                lo = mid + 2;
+            } else if (mid > 0 && nums[mid] == nums[mid-1]) {
+                hi = mid - 2;
+            } else {
+                return nums[mid];
+            }
+        }
+        return nums[lo];
+    }
+}

@@ -1,0 +1,99 @@
+// 这一题是涉及到depth的经典题目。
+
+// 解法1： 从上而下
+// 之前写过一个错误的写法如下
+class Solution {
+    public int minDepth(TreeNode root) {
+        return minDepth(root, 0);
+    }
+    
+    private int minDepth(TreeNode root, int level) {
+        if (root == null) {
+            return level;
+        }
+        // 其实不必要特殊关照leaf node，顺其自然
+        if (root.left == null && root.right == null) {
+            return level + 1;
+        } else if (root.left == null) {
+            // 怎么又倒回去call public的方法？
+            return minDepth(root.right) + 1;
+        } else if (root.right == null) {
+            return minDepth(root.left) + 1;
+        } else {
+            // 不需要最后那个+1，这是top-down的，level传下来一路就已经加和了depth
+            return Math.min(minDepth(root.left, level+1), minDepth(root.right,level+1)) + 1;
+        }
+    }
+}
+
+ // 正确的写法
+ class Solution {
+    public int minDepth(TreeNode root) {
+        // 注意这里是从0开始，如果root是null，就是返回0.
+        // 如果input是 [0] 一个node，则会在左右子树都返回level = 1的时候确认depth为1
+        return minDepth(root, 0);
+    }
+    
+    private int minDepth(TreeNode root, int level) {
+        if (root == null) {
+            return level;
+        }
+        // 这里要注意，要判断左右是否为null。这是这一题的易错点。因为leaf node需要左右子树都为null
+        // 如果只有一个分支为 null，不能算depth到头了，要往另一个不是null 的子树深挖下去。
+        // 如果这里不做判断，则一个分支为null的情况，会被认为是一个leaf node，而返回level等于当前level
+        if (root.left == null) {
+            return minDepth(root.right, level+1);
+        } else if (root.right == null) {
+            return minDepth(root.left, level+1);
+        } else {
+            return Math.min(minDepth(root.left, level+1), minDepth(root.right,level+1));
+        }
+    }
+}
+
+// 解法2： bottom up 加和法
+// 明白了上面一种解法，就不容易跟这种混淆了。这一种是当碰到null的时候，才会返回0，leaf node也就会返回 Math.min(0,0) + 1 = 1.
+// 同样要注意，一个分支为null，另一个分支不为null的情况。
+class Solution {
+    public int minDepth(TreeNode root) {
+        if (root == null) {
+            return 0;
+        }
+        if (root.left == null) {
+            return minDepth(root.right) + 1;
+        } else if (root.right == null) {
+            return minDepth(root.left) + 1;
+        } else {
+            return Math.min(minDepth(root.left), minDepth(root.right)) + 1;
+        }
+    }
+}
+
+
+// 解法3： level order traversal
+class Solution {
+    public int minDepth(TreeNode root) {
+        Queue<TreeNode> queue = new LinkedList<>();
+        if (root != null) {
+            queue.offer(root);
+        }
+        int level = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                if (node.left == null && node.right == null) {
+                    return level + 1;
+                }
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+            level++;
+        }
+        return level;
+    }
+}

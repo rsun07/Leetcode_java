@@ -1,0 +1,40 @@
+// 这个题目，新手容易出错，错在以为只需要管root和left right的关系就行了。而忽略了是整个left subtree要比root小，所有的node都要小。
+
+// 很多解法，我已经经常用的就是传max min 的value进去，然后比较。这种方法需要特别注意overflow的问题。易错的点是，注意定义，left subtree必须要个的比root小，不可以有相等的情况。题目没说不会有重复，如果有重复，就直接false。因为无论如何都不满足题目的条件。
+// 有一种办法是把传值改成long，然后传MIN-1， MAX+1 作为初始值。
+// 注意不要去想，传MIN，然后特殊处理。有可能出现test case，就是树里面有值是MIN，然后左子树是其他数字，或者左child也是一个MIN。这种是不合法的，但是特殊处理很容易掉入陷阱返回true
+
+// 利用Null来解决问题。
+class Solution {
+    public boolean isValidBST(TreeNode root) {
+        return isValidBST(root, null, null);
+    }
+    
+    private boolean isValidBST(TreeNode root, Integer min, Integer max) {
+        if (root == null) return true;
+        if (min != null && root.val <= min || max != null && root.val >= max) return false;
+        // 特别注意这一行，什么时候放max，什么时候放value，什么时候min，要推敲清楚，写的时候参考例子来看。
+        return isValidBST(root.left, min, root.val) && isValidBST(root.right, root.val, max);
+    }
+}
+
+// 利用inorder traversal，绝对上升，后一个绝对大于前一个的办法做。
+class Solution {
+    public boolean isValidBST(TreeNode root) {
+        if (root == null) return true;
+        Stack<TreeNode> stack = new Stack<>();
+        Integer preVal = null;
+        while (!stack.isEmpty() || root != null) {
+            if (root != null) {
+                stack.push(root);
+                root = root.left;
+            } else {
+                root = stack.pop();
+                if (preVal != null && root.val <= preVal) return false;
+                preVal = root.val;
+                root = root.right;
+            }
+        }
+        return true;
+    }
+}

@@ -1,0 +1,189 @@
+// 付费题，一道经典的题目，就是要判断父节点和子节点val之间是否相等的时候，用什么办法。最简单的是把父节点的val传进去，父节点的判断完全依赖子节点的返回值。或者就是用更为复杂的if else，在父节点调用子节点的val。
+
+/*
+Given the root of a binary tree, return the number of uni-value subtrees.
+
+A uni-value subtree means all nodes of the subtree have the same value.
+
+Example 1:
+Input: root = [5,1,5,5,5,null,5]
+Output: 4
+
+
+Example 2:
+Input: root = []
+Output: 0
+
+Example 3:
+
+Input: root = [5,5,5,5,5,null,5]
+Output: 6
+ 
+
+Constraints:
+
+The numbrt of the node in the tree will be in the range [0, 1000].
+-1000 <= Node.val <= 1000
+*/
+
+
+// 我的第一次解法
+class Solution {
+    public int countUnivalSubtrees(TreeNode root) {
+        if (root == null) return 0;
+        return dfs(root).count;
+    }
+    
+    private SubTreeInfo dfs(TreeNode root) {
+        if (root == null) return null;
+        SubTreeInfo leftInfo = dfs(root.left), rightInfo = dfs(root.right);
+        if (leftInfo == null && rightInfo == null) {
+            return new SubTreeInfo(root.val, true, 1);
+        }
+        if (leftInfo == null || rightInfo == null) {
+            SubTreeInfo subTreeInfo = leftInfo == null ? rightInfo : leftInfo;
+            if (subTreeInfo.isUnivalTree && root.val == subTreeInfo.unival) {
+                return new SubTreeInfo(root.val, true, subTreeInfo.count + 1);
+            } else {
+                return new SubTreeInfo(root.val, false, subTreeInfo.count);
+            }
+        } 
+        // both leftInfo and rightInfo not null
+        if (leftInfo.isUnivalTree && rightInfo.isUnivalTree && leftInfo.unival == rightInfo.unival && leftInfo.unival == root.val) {
+            return new SubTreeInfo(root.val, true, leftInfo.count + rightInfo.count + 1);
+        } else {
+            return new SubTreeInfo(root.val, false, leftInfo.count + rightInfo.count);
+        }
+    }
+    
+    private class SubTreeInfo {
+        int unival;
+        boolean isUnivalTree;
+        int count;
+        SubTreeInfo(int unival, boolean isUnivalTree, int count) {
+            this.unival = unival;
+            this.isUnivalTree = isUnivalTree;
+            this.count = count;
+        }
+    }
+}
+
+
+// 不用inner class的解法。错误解法！
+class Solution {
+    private int count = 0;
+    
+    public int countUnivalSubtrees(TreeNode root) {
+        if (root == null) return 0;
+        dfs(root);
+        return count;
+    }
+    
+    private boolean dfs(TreeNode root) {
+        if (root == null) return true;
+        if (root.left == null && root.right == null) {
+            count++;
+            return true;
+        }
+        if (root.left == null || root.right == null) {
+            TreeNode child = root.left == null ? root.right : root.left;
+            if (dfs(child) && root.val == child.val) {
+                count++;
+                return true;
+            }
+            return false;
+        }
+        // both left and right are not null
+        // 错在了这里，如果dfs(root.left)是false，则永远不会call dfs(root.right)。但是我们需要call那边来递增count
+        if (dfs(root.left) && dfs(root.right) && root.val == root.left.val && root.val == root.right.val) {
+            count++;
+            return true;
+        }
+        return false;
+    }
+}
+
+// 上面的易错点稍微改正就可以了
+        boolean rightRes = dfs(root.right);
+        if (dfs(root.left) && rightRes && root.val == root.left.val && root.val == root.right.val) {
+            count++;
+            return true;
+        }
+
+
+
+// 下面这个逻辑也是错的
+
+// 那个很多||的逻辑很容易出错。比如root.left == null && root.val != root.right.val的情况下，还会往后走，这里走到第三条，我们默认left和right都不是null，而事实上可能还是null。记住不要写出这样的逻辑来
+
+    private boolean dfs(TreeNode root) {
+        if (root == null) return true;
+        if (root.left == null && root.right == null) {
+            count++;
+            return true;
+        }
+        boolean left = dfs(root.left), right = dfs(root.right);
+        if (!left || !right) return false;
+        // left, right null 不同时成立，否则已经返回。且已知left right都返回了true
+        if (root.left == null && root.val == root.right.val 
+           || root.right == null && root.val == root.left.val
+           || root.val == root.left.val && root.val == root.right.val) {
+            count++;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+// 看了答案后的另一种更简洁的写法。不过又有一个小bug
+class Solution {
+    private int count = 0;
+    
+    public int countUnivalSubtrees(TreeNode root) {
+        if (root == null) return 0;
+        dfs(root);
+        return count;
+    }
+    
+    private boolean dfs(TreeNode root) {
+        if (root == null) return true;
+        boolean isUni = true;
+        if (root.left != null) {
+            isUni = dfs(root.left) && root.left.val == root.val;
+        }
+        if (root.right != null) {
+            // isUni会忽略上面 left判断后的值，被赋值成right的值。这是不对的。应该改成 isUni = dfs(root.right) && isUni && root.right.val == root.val; 特别特别注意上面的解法犯的错误。这里isUni必须放在 dfs(root.right) 后面，否则会少掉，会少跑right的子树。
+
+            isUni = dfs(root.right) && root.right.val == root.val;
+        }
+        if (isUni) {
+            count++;
+            return true;
+        }
+        return false;
+    }
+}
+
+
+
+// 一种更简单的解法，把parent val传进去。
+class Solution {
+    private int count = 0;
+    
+    public int countUnivalSubtrees(TreeNode root) {
+        if (root == null) return 0;
+        dfs(root, 0);
+        return count;
+    }
+    
+    private boolean dfs(TreeNode root, int parentVal) {
+        if (root == null) return true;
+        boolean leftRes = dfs(root.left, root.val), rightRes = dfs(root.right, root.val);
+        if (leftRes && rightRes) {
+            count++;
+            return root.val == parentVal;
+        } 
+        return false;
+    }
+}

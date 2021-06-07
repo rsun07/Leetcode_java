@@ -1,0 +1,78 @@
+// 对我来说简单题，要么DFS找有几大块，要么就union find找
+class Solution {
+    public int findCircleNum(int[][] isConnected) {
+        int n = isConnected.length;
+        int count = 0;
+        boolean[] visited = new boolean[n];
+        for (int i = 0; i < n; i++) {
+            if (visited[i]) continue;
+            count++;
+            Stack<Integer> stack = new Stack<>();
+            stack.push(i);
+            visited[i] = true;
+            while (!stack.isEmpty()) {
+                int u = stack.pop();
+                for (int v = 0; v < n; v++) {
+                    if (isConnected[u][v] == 1 && !visited[v]) {
+                        stack.push(v);
+                        visited[v] = true;
+                    }
+                }
+            }
+        }
+        return count; 
+    }
+}
+
+class Solution {
+    public int findCircleNum(int[][] isConnected) {
+        UnionFind uf = new UnionFind(isConnected.length);
+        for (int i = 0; i < isConnected.length; i++) {
+            for (int j = i+1; j < isConnected.length; j++) {
+                if (isConnected[i][j] == 1) {
+                    uf.union(i, j);
+                }
+            }
+        }
+        return uf.count; 
+    }
+    
+    private class UnionFind {
+        private int[] id, size;
+        int count;
+        
+        UnionFind(int n) {
+            this.count = n;
+            this.id = new int[n];
+            this.size = new int[n];
+            for (int i = 0; i < n; i++) {
+                id[i] = i;
+                size[i] = 1;
+            }
+        }
+        
+        private int root(int i) {
+            while (id[i] != i) {
+                i = id[i];
+            }
+            return i;
+        }
+        
+        public boolean isConnected(int p, int q) {
+            return root(p) == root(q);
+        }
+        
+        public void union(int p, int q) {
+            int rootP = root(p), rootQ = root(q);
+            if (rootP == rootQ) return;
+            count--;
+            if (size[rootP] > size[rootQ]) {
+                size[rootP] += size[rootQ];
+                id[rootQ] = rootP;
+            } else {
+                size[rootQ] += size[rootP];
+                id[rootP] = rootQ;
+            }
+        }
+    }
+}

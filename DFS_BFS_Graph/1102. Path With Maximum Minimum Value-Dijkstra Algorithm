@@ -1,0 +1,73 @@
+// 付费题 FB tag
+
+/*
+Given a matrix of integers A with R rows and C columns, find the maximum score of a path starting at [0,0] and ending at [R-1,C-1].
+
+The score of a path is the minimum value in that path.  For example, the value of the path 8 →  4 →  5 →  9 is 4.
+
+A path moves some number of times from one visited cell to any neighbouring unvisited cell in one of the 4 cardinal directions (north, east, west, south).
+
+ 
+
+Example 1:
+
+
+
+Input: [[5,4,5],[1,2,6],[7,4,6]]
+Output: 4
+Explanation: 
+The path with the maximum score is highlighted in yellow. 
+Example 2:
+
+
+
+Input: [[2,2,1,2,2,2],[1,2,2,2,1,2]]
+Output: 2
+Example 3:
+
+
+
+Input: [[3,4,6,3,4],[0,2,1,1,7],[8,8,3,2,7],[3,2,4,9,8],[4,1,2,0,0],[4,6,5,4,3]]
+Output: 3
+ 
+
+Note:
+
+1 <= R, C <= 100
+0 <= A[i][j] <= 10^9
+*/
+
+// 迪加科斯拉算法，本质是一种贪心算法，用于有向图，而且是有权重的有向图，找最小或者最大生成树。
+// 这一题，最直接的，DFS把所有可能的path都找出来，然后比较。但是这种复杂度特别高，假设是n*m的矩阵，所有可能的path是2^n 级别的。讨论中，有人提到，是4^n，因为每一个点都有四种选择，相当于backtrack，每个位置有4中选择，一共要m*n次选择。反正就是时间复杂度超级高。
+
+// 迪加科斯拉，并不是每一步局部的贪心，而是一种全局的贪心，看下面的代码就明白了。如果只是每一步局部4种选择贪心，大概是不行的，会走错路。比如前期都很大，不然碰到只要有4个0可以选，而之前忽略的另一条路，可以避开0。
+
+
+// Time: O(Vlog(V) + E). Because the maximum number of element in the queue cannot be larger than V so pushing and popping from queue is O(log(V)). Also we only push each vertex to the queue once, so at maximum we do it V times. Thats Vlog(V). The E bit comes from the for loop inside the while loop.
+// Space: O(V) where V is the maximum depth of our search tree.
+
+class Solution {
+    public int maximumMinimumPath(int[][] A) {
+        if (A == null || A.length == 0) return 0;
+        PriorityQueue<int[]> maxHeap = new PriorityQueue<>((coor1, coor2) -> -Integer.compare(A[coor1[0]][coor1[1]], A[coor2[0]][coor2[1]]));
+        int n = A.length, m = A[0].length;
+        int[][] moves = new int[][]{{1,0}, {-1,0}, {0,1}, {0,-1}};
+        boolean[][] visited = new boolean[n][m];
+        // 因为我们来不及判断最后一个value，就退出了while循环。
+        int minVal = A[n-1][m-1];
+        visited[0][0] = true;
+        maxHeap.add(new int[]{0, 0});
+        while (!visited[n-1][m-1]) {
+            int[] coor = maxHeap.remove();
+            // 注意，在这里判断minVal，而不是在for里面，for里面只是备选，这里才是选择了
+            minVal = Math.min(minVal, A[coor[0]][coor[1]]);
+            for (int[] move : moves) {
+                int x = coor[0] + move[0], y = coor[1] + move[1];
+                if (x < 0 || y < 0 || x >= n || y >= m || visited[x][y]) continue;
+                visited[x][y] = true;
+                maxHeap.add(new int[]{x, y});
+            }
+        }
+        return minVal;
+    }
+}

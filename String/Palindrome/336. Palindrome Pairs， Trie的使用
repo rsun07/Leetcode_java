@@ -1,0 +1,141 @@
+// 这一题，直接半暴力解题。
+
+// 这个的复杂度是 O(n^2 * k), k是string的平均长度。实际上，在n^2里，只进行了两次k操作。每次call private function各一次。所以勉强不超时。
+class Solution {
+    public List<List<Integer>> palindromePairs(String[] words) {
+        List<List<Integer>> output = new ArrayList<>();
+        if (words == null || words.length < 2) {
+            return output;
+        }
+        for (int i = 0; i < words.length - 1; i++) {
+            for (int j = i+1; j < words.length; j++) {
+                palindromePairs(words, i, j, output);
+                palindromePairs(words, j, i, output);
+            }
+        }
+        return output;
+    }
+    
+    private void palindromePairs(String[] words, int i, int j, List<List<Integer>> output) {
+        if (words[i] == null || words[j] == null) {
+            return;
+        }
+        int lo = 0, hi = words[j].length()-1;
+        while (lo < words[i].length() && hi >= 0) {
+            if (words[i].charAt(lo++) != words[j].charAt(hi--)) {
+                return;
+            }
+        }
+        String word;
+        if (lo >= words[i].length()) {
+            lo = 0;
+            word = words[j];
+        } else {
+            hi = words[i].length() - 1;
+            word = words[i];
+        }
+        while (lo < hi) {
+            if (word.charAt(lo++) != word.charAt(hi--)) {
+                return;
+            }
+        }
+        output.add(List.of(i, j));
+    }
+}
+
+
+// 实际面试的时候，可以善用Java String 的function，不一定什么都要自己去实现，上面那一大串，写下来费时费力。尤其是FB的面试。下面这个在LC虽然会超时，是因为private function实际上跑了三遍k，concact一遍，reverse一遍，compare再一遍。而每个n^2，又要两次private。
+class Solution {
+    public List<List<Integer>> palindromePairs(String[] words) {
+        List<List<Integer>> output = new ArrayList<>();
+        if (words == null || words.length < 2) return output;
+        for (int i = 0; i < words.length; i++) {
+            for (int j = i+1; j < words.length; j++) {
+                checkAndAdd(words, i, j, output);
+                checkAndAdd(words, j, i, output);
+            }
+        }
+        return output;
+    }
+    
+    private void checkAndAdd(String[] words, int i, int j, List<List<Integer>> output) {
+        String s = words[i].concat(words[j]);
+        if (!s.equals(new StringBuilder(s).reverse().toString())) return;
+        output.add(List.of(i, j));
+    }
+}
+
+// 用Trie来做。
+
+class Solution {
+    
+    private class TrieNode {
+        int wordIndex;
+        // from current char, suffix (actually word prefix) is palindrome
+        List<Integer> indexes;
+        TrieNode[] children;
+        
+        TrieNode() {
+            this.wordIndex = -1;
+            this.indexes = new ArrayList<>();
+            this.children = new TrieNode[26];
+        }
+    }
+    
+    
+    public List<List<Integer>> palindromePairs(String[] words) {
+        if (words == null || words.length < 2) return Collections.emptyList();
+        TrieNode root = new TrieNode();
+        for (int i = 0; i < words.length; i++) {
+            buildTrie(root, i, words[i]);
+        }
+        
+        List<List<Integer>> output = new ArrayList<>();
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i];
+            TrieNode node = root;
+            for (int j = 0; j < word.length() && node != null; j++) {
+                // 情况1，目前的word，加上 另一个word倒过来。该word比另一个word更长
+                if (node.wordIndex >= 0 && isPalindrome(word, j, word.length() - 1)) {
+                    output.add(List.of(i, node.wordIndex));
+                }
+                node = node.children[word.charAt(j)-'a'];
+            }
+            if (node == null) continue;
+            
+            // 注意，上面情况1没有包括这种情况。我一开始以为当j= word.length()-1的时候包括了，其实没有，j= word.length()-1还是去掉了word的最后一个char
+            // 这种是情况2，就是word和另一个word等长度，互为倒过来
+            if (node.wordIndex >= 0 && node.wordIndex != i) {
+                output.add(List.of(i, node.wordIndex));
+            }
+            
+            // 情况3，word比另一个word更短的情况
+            for (int index : node.indexes) {
+                output.add(List.of(i, index));
+            }
+        }
+        return output;
+    }
+    
+    private void buildTrie(TrieNode root, int i, String word) {
+        for (int j = word.length() - 1; j >= 0; j--) {
+            char c = word.charAt(j);
+            // 为什么先判断？如果本身就是palindrome，搭配上空字符，也是一对
+            if (isPalindrome(word, 0, j)) {
+                root.indexes.add(i);
+            }
+            if (root.children[c-'a'] == null) {
+                root.children[c-'a'] = new TrieNode();
+            }
+            root = root.children[c-'a'];
+        }
+        root.wordIndex = i;
+    }
+    
+    private boolean isPalindrome(String word, int lo, int hi) {
+        while (lo < hi) {
+            if (word.charAt(lo++) != word.charAt(hi--)) return false;
+        }
+        return true;
+    }
+}

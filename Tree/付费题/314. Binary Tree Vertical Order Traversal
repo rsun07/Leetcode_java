@@ -1,0 +1,136 @@
+// 付费题，典型的google题目，莫名其妙，让人摸不着头脑
+/*
+
+Given the root of a binary tree, return the vertical order traversal of its nodes' values. (i.e., from top to bottom, column by column).
+
+If two nodes are in the same row and column, the order should be from left to right.
+
+ 
+
+Example 1:
+Input: root = [3,9,20,null,null,15,7]
+Output: [[9],[3,15],[20],[7]]
+
+Example 2:
+Input: root = [3,9,8,4,0,1,7]
+Output: [[4],[9],[3,0,1],[8],[7]]
+                3
+               / \
+              9   8
+             / \ / \
+            4  0-1  7
+
+
+Example 3:
+Input: root = [3,9,8,4,0,1,7,null,null,null,2,5]
+Output: [[4],[9,5],[3,0,1],[8,2],[7]]
+                3
+               / \
+              9   8
+             / \ / \
+            4  0-1  7
+               / \
+              5   2
+
+5是1的左子树，2是0的右子树。这里2和8在同一列，5和9在同一列，8必须在2前面，因为8在更上。如果用DFS，从左往右，会造成2在8前面，出错。
+
+Example 4:
+Input: root = []
+Output: []
+ 
+
+Constraints:
+
+The number of nodes in the tree is in the range [0, 100].
+-100 <= Node.val <= 100
+*/
+
+
+// 例子给的不充分，一定要想到，有可能发生这样的情况，类似上面例子3里面，如果右子树里面，有非常非常左的，可以比左子树里的最左还要左。类似下面的例子。我一开始想用一直往左，左边到最左获得min的index，这是行不通的。要获得range，就必须扫描整棵树，那么不如只扫描一次，把range存下来。
+/*
+
+                3
+               / \
+              9   8
+                 / \
+                1   7
+               /
+              4
+             /
+            5
+           /
+          0
+         /
+        11
+
+*/
+
+
+// 典型的审题不仔细，例子都没看全，就来这边做题。还有一个点，既然已经知道min和max的range了，直接i=0，扫range就行了，不需要random的扫map。
+// 下面的错在，仔细看第三个例子。8要在2前面，但是我这里是从左往右，会先到2，再到8
+class Solution {
+    public List<List<Integer>> verticalOrder(TreeNode root) {
+        if (root == null) return Collections.emptyList();
+        Map<Integer, List<Integer>> result = new HashMap<>();
+        int[] range = dfs(root, 0, result);
+        List<Integer>[] output = new List[range[1]-range[0]+1];
+        for (int x : result.keySet()) {
+            output[x-range[0]] = result.get(x);
+        }
+        List<List<Integer>> outputList = new ArrayList<>();
+        for (List<Integer> line : output) 
+            outputList.add(line);
+        return outputList;
+    }
+    
+    // return the min value of the x location
+    private int[] dfs (TreeNode root, int x, Map<Integer, List<Integer>> result) {
+        if (root == null) return new int[]{x+1, x-1};
+        result.putIfAbsent(x, new ArrayList<>());
+        result.get(x).add(root.val);
+        // left 不一定小于right，有可能right有左子树非常长，往左延伸
+        int[] left = dfs(root.left, x-1, result), right = dfs(root.right, x+1, result);
+        return new int[]{Math.min(left[0], right[0]), Math.max(left[1], right[1])};
+    }
+}
+
+// 明白了题意，则这一题最好用BFS，level order做，从左往右。可以保证，每一列里面，一定是从上到下，然后行的话从左到右排列的。
+// 用DFS，就必须同时存一个行的编号，根据行的编号来排序。
+
+class Solution {
+    public List<List<Integer>> verticalOrder(TreeNode root) {
+        if (root == null) return Collections.emptyList();
+        Map<Integer, List<Integer>> columns = new HashMap<>();
+        int min = 0, max = 0;
+        Queue<TreeNode> queue = new LinkedList<>();
+        Queue<Integer> indexQueue = new LinkedList<>();
+        queue.offer(root);
+        indexQueue.offer(0);
+        while(!queue.isEmpty()) {
+            int levelSize = queue.size();
+            for (int i = 0; i < levelSize; i++) {
+                TreeNode node = queue.poll();
+                int x = indexQueue.poll();
+                columns.putIfAbsent(x, new ArrayList<>());
+                columns.get(x).add(node.val);
+                min = Math.min(min, x);
+                max = Math.max(max, x);
+                if (node.left != null) {
+                    queue.offer(node.left);
+                    indexQueue.offer(x-1);
+                }
+                if (node.right != null) {
+                    queue.offer(node.right);
+                    indexQueue.offer(x+1);
+                }
+            }
+        }
+        
+        List<List<Integer>> output = new ArrayList<>(max-min+1);
+        for (int i = 0; i <= max-min; i++) {
+            output.add(columns.get(min+i));
+        }
+        
+        return output;
+    }
+}

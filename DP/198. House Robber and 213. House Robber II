@@ -1,0 +1,59 @@
+// 刚拿到题目，很容易想，要么是所有奇数index相加， 要么是所有偶数index相加。其实则不然，比如这个例子[3,1,1,3], 其实你可以拿两个3.
+// DP 只需要存两个数字，一个是如果不偷前一个，偷再前面一个。另一个就是不偷本户，偷前一户。
+class Solution {
+    public int rob(int[] nums) {
+        int preTwoMax = 0, preMax = 0;
+        for (int num : nums) {
+            // if pre was not selected, then actually preMax == preTwoMax, so there, preTwoMax + num must bigger than preMax
+            // 这里有一个疑问或者说是困惑。就是为什么选了num，就不能选preMax，万一preMax不包括preNum呢？这个疑惑其实很好解答，就是说，preMax可能包括了preNum，也可能不包括，所以不能选。如果preMax不包括preNum，则说明pre的情况下，不包括preNum会获得更大的值，此时，preMax = preTwoMax，所以我们用preTwoMax + num 一定是大于preMax的，因为num永远是正数。如果num可以为负数，则dp不成立
+            int cur = Math.max(preTwoMax + num, preMax);
+            preTwoMax = preMax;
+            preMax = cur;
+        }
+        return preMax;
+    }
+}
+
+
+// House robber II， 就是加了一个条件，本来一排的房子变成了一个环。这个很好办，分两种情况计算，取大的。一种是取0不取最后一个，一种是取最后一个不取0。是否真的取，其实不重要，重要的是是否把0个最后一个列入考虑范围，只是两者不能同时被列入考虑范围，否则有被同事取走的可能.
+// 特别注意一些边界条件，比如数组只有1个元素或者2个元素的时候。2个其实还好，1个的时候，因为既是第一个也是最后一个，所以会被永远忽略掉。两种方法来避免。
+class Solution {
+    public int rob(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+        // attention，易错点
+        if (nums.length == 1) {
+            return nums[0];
+        }
+        return Math.max(rob(nums, 0, nums.length-1), rob(nums, 1, nums.length));
+    }
+    
+    private int rob(int[] nums, int lo, int hi) {
+        int preTwoMax = 0, preMax = 0;
+        for (int i = lo; i < hi; i++) {
+            int cur = Math.max(preTwoMax + nums[i], preMax);
+            preTwoMax = preMax;
+            preMax = cur;
+        }
+        return preMax;
+    }
+}
+
+class Solution {
+    public int rob(int[] nums) {
+        if (nums == null || nums.length == 0) return 0;
+        return Math.max(rob(nums, 0, nums.length-1), rob(nums, 1, nums.length));
+    }
+    
+    private int rob(int[] nums, int lo, int hi) {
+        if (lo >= nums.length) return 0;
+        int preMax = 0, curMax = nums[lo];
+        for (int i = lo+1; i < hi; i++) {
+            int max = Math.max(nums[i] + preMax, curMax);
+            preMax = curMax;
+            curMax = max;
+        }
+        return curMax;
+    }
+}

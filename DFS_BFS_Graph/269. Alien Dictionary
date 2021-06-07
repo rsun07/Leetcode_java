@@ -1,0 +1,198 @@
+// 付费题，非常难的一道题，涉及到字符串的排列，涉及到有向图找环。
+/*
+There is a new alien language that uses the English alphabet. However, the order among letters are unknown to you.
+
+You are given a list of strings words from the dictionary, where words are sorted lexicographically by the rules of this new language.
+
+Derive the order of letters in this language, and return it. If the given input is invalid, return "". If there are multiple valid solutions, return any of them.
+
+ 
+
+Example 1:
+
+Input: words = ["wrt","wrf","er","ett","rftt"]
+Output: "wertf"
+Example 2:
+
+Input: words = ["z","x"]
+Output: "zx"
+Example 3:
+
+Input: words = ["z","x","z"]
+Output: ""
+Explanation: The order is invalid, so return "".
+ 
+
+Constraints:
+
+1 <= words.length <= 100
+1 <= words[i].length <= 100
+words[i] consists of only lowercase English letters.
+*/
+
+// 一开始最好是搜集齐所有的char，不要在行进中去搜集，会变得非常复杂麻烦易错。
+
+class Solution {
+    public String alienOrder(String[] words) {
+        if (words == null || words.length == 0) {
+            return "";
+        }
+        Set<Character> chars = new HashSet<>();
+        for (String word : words) {
+            for (char c : word.toCharArray()) {
+                chars.add(c);
+            }
+        }
+        
+        Map<Character, Set<Character>> graph = new HashMap<>();
+        for (int i = 0; i < words.length - 1; i++) {
+            String w1 = words[i], w2 = words[i+1];
+            int i1 = 0, i2 = 0;
+            while (i1 < w1.length() && i2 < w2.length()) {
+                if (w1.charAt(i1) != w2.charAt(i2)) {
+                    break;
+                }
+                i1++;
+                i2++;
+
+            }
+            if (i1 < w1.length()) {
+                if (i2 == w2.length()) return "";
+                char c1 = w1.charAt(i1), c2 = w2.charAt(i2);
+                if (graph.containsKey(c2) && graph.get(c2).contains(c1)) return "";
+                graph.putIfAbsent(c1, new HashSet<>());
+                graph.get(c1).add(c2);
+                chars.remove(c1);
+                chars.remove(c2);
+            }
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        Set<Character> visited = new HashSet<>();
+        for (char c : chars) {
+            sb.append(c);
+        }
+        for (char c : graph.keySet()) {
+            if (visited.contains(c)) continue;
+            Stack<Character> stack = new Stack<>();
+            stack.push(c);
+            Set<Character> visiting = new HashSet<>();
+            while (!stack.isEmpty()) {
+                char u = stack.peek();
+                if (visited.contains(u)) continue;
+                if (visiting.contains(u)) {
+                    visiting.remove(u);
+                    visited.add(u);
+                    sb.append(u);
+                    stack.pop();
+                    continue;
+                }
+                visiting.add(u);
+                if (!graph.containsKey(u)) continue;
+                for (char v : graph.get(u)) {
+                    if (visited.contains(v)) continue;
+                    if (visiting.contains(v)) return "";
+                    stack.push(v);
+                }
+            }
+        }
+        return sb.reverse().toString();
+    }
+}
+
+// 前面一样，后半部分用递归的DFS
+        StringBuilder sb = new StringBuilder();
+        Set<Character> visited = new HashSet<>();
+        for (char c : chars) {
+            sb.append(c);
+        }
+        for (char c : graph.keySet()) {
+            if (visited.contains(c)) continue;
+            if (cycleCheckAndDfs(c, new HashSet<>(), visited, graph, sb)) return "";
+        }
+        return sb.reverse().toString();
+    }
+    
+    private boolean cycleCheckAndDfs(char u, Set<Character> visiting, Set<Character> visited, Map<Character, Set<Character>> graph, StringBuilder sb) {
+        if (visited.contains(u)) return false;
+        visiting.add(u);
+        if (graph.containsKey(u)) {
+            for (char v : graph.get(u)) {
+                if (visited.contains(v)) continue;
+                if (visiting.contains(v)) return true;
+                if (cycleCheckAndDfs(v, visiting, visited, graph, sb)) return true;
+            }
+        }
+        visiting.remove(u);
+        visited.add(u);
+        sb.append(u);
+        return false;
+    }
+
+// 还可以用BFS写，更麻烦。
+
+
+// 想用Toplogical sort来做，indegree，但是有问题，很多错误
+// 这里最难的一个点在于，有可能出现两次c -> b的情况，也就是通一条边出现两次，但是这里出度 indegree只能算一次。我的代码会重复的加出度，所以会出错。["ac","ab","zc","zb"]
+class Solution {
+    public String alienOrder(String[] words) {
+        if (words == null || words.length == 0) {
+            return "";
+        }
+        Map<Character, Set<Character>> graph = new HashMap<>();
+        Map<Character, Integer> indegree = new HashMap<>();
+        for (int i = 0; i < words.length - 1; i++) {
+            String w1 = words[i], w2 = words[i+1];
+            int i1 = 0, i2 = 0;
+            while (i1 < w1.length() && i2 < w2.length()) {
+                if (w1.charAt(i1) != w2.charAt(i2)) {
+                    break;
+                }
+                indegree.putIfAbsent(w1.charAt(i1), 0);
+                i1++;
+                i2++;
+
+            }
+            if (i1 < w1.length()) {
+                if (i2 == w2.length()) return "";
+                char c1 = w1.charAt(i1), c2 = w2.charAt(i2);
+                if (graph.containsKey(c2) && graph.get(c2).contains(c1)) return "";
+                if (!graph.containsKey(c1) || !graph.get(c1).contains(c2))
+                    indegree.put(c2, indegree.getOrDefault(c2, 0) + 1);
+                graph.putIfAbsent(c1, new HashSet<>());
+                graph.get(c1).add(c2);
+                indegree.putIfAbsent(c1, 0);
+            }
+            while (i1 < w1.length()) {
+                indegree.putIfAbsent(w1.charAt(i1++), 0);
+            }
+            while (i2 < w2.length()) {
+                indegree.putIfAbsent(w2.charAt(i2++), 0);
+            }
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        Queue<Character> queue = new LinkedList<>();
+        for (char c : indegree.keySet()) {
+            if (indegree.get(c) == 0) {
+                queue.offer(c);
+                sb.append(c);
+            }
+        }
+        while (!queue.isEmpty()) {
+            char c = queue.poll();
+            indegree.remove(c);
+            if (!graph.containsKey(c)) continue;
+            for (char next : graph.get(c)) {
+                if (indegree.get(next) == 1) {
+                    indegree.remove(next);
+                    queue.offer(next);
+                    sb.append(next);
+                } else {
+                    indegree.put(next, indegree.get(next) - 1);
+                }
+            }
+        }
+        return indegree.isEmpty() ? sb.toString() : "";
+    }
+}

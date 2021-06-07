@@ -1,0 +1,63 @@
+/*
+付费题，FB tag
+
+Given a string, we can "shift" each of its letter to its successive letter, for example: "abc" -> "bcd". We can keep "shifting" which forms the sequence:
+
+"abc" -> "bcd" -> ... -> "xyz"
+Given a list of non-empty strings which contains only lowercase alphabets, group all strings that belong to the same shifting sequence.
+
+Example:
+
+Input: ["abc", "bcd", "acef", "xyz", "az", "ba", "a", "z"],
+Output: 
+[
+  ["abc","bcd","xyz"],
+  ["az","ba"],
+  ["acef"],
+  ["a","z"]
+]
+*/
+
+// 本质就是String encoding，找规律。我找的是两两之间的diff，其实还有更容易的规律，就是把第一个字母转换成a
+class Solution {
+    public List<List<String>> groupStrings(String[] strings) {
+        Map<String, List<String>> codeToStrs = new HashMap<>();
+        for (String str : strings) {
+            String code = encode(str);
+            codeToStrs.putIfAbsent(code, new ArrayList<>());
+            codeToStrs.get(code).add(str);
+        }
+        return new ArrayList<>(codeToStrs.values());
+    }
+    
+    private String encode(String s) {
+        if (s.length() == 0) return " ";
+        char pre = s.charAt(0);
+        StringBuilder code = new StringBuilder();
+        for (int i = 1; i < s.length(); i++) {
+            int diff = s.charAt(i) - pre;
+            if (diff < 0) diff += 26;
+            pre = s.charAt(i);
+            code.append(diff);
+            code.append(',');
+        }
+        return code.toString();
+    }
+}
+
+// 上面都一样，就是下面，encode换一种方法，永远把第一个char改成a
+
+    private String encode(String s) {
+        if (s.length() == 1) return "a";
+        int diff = s.charAt(0) - 'a';
+        if (diff == 0) return s;
+        
+        StringBuilder code = new StringBuilder("a");
+        for (int i = 1; i < s.length(); i++) {
+            char c = s.charAt(i), transferC;
+            if (c - 'a' >= diff) transferC = (char) (c - diff);
+            else transferC = (char) (c - diff + 26);
+            code.append(transferC);
+        }
+        return code.toString();
+    }

@@ -1,0 +1,143 @@
+// 很经典的题目，以往的我，往往会直接给出最优解。但是这次2021年准备面试刷题让我意识到，不能只记忆题目的解法，而要知道解法是为什么来的，怎么来的。而要探究这一点，很多时候，就是从最简单的bruteforce来的。
+
+// 这一题的brute force是这样做。从任意一点开始，从任意一点结束，然后还要判断是否的palindrom，这样的n^3的复杂度。
+// DP的话，就是把重复的计算的省略掉。DP[i][j] 表示从i到j是否是Palindrome。这样一来，判断palindrom就变成O(1)了，我们可以从长度1开始，然后长度2，长度n。这样永远会先填满更短的dp[][]，然后用于判断更长的
+
+// 会超时
+class Solution {
+    public String longestPalindrome(String s) {
+        if (s == null || s.length() == 0) return "";
+        int lo = 0, hi = 0;
+        for (int i = 0; i < s.length(); i++) {
+            for (int j = i; j < s.length(); j++) {
+                if (isPalindrome(s, i, j)) {
+                    if (j-i > hi-lo) {
+                        hi = j;
+                        lo = i;
+                    }
+                }
+            }
+        }
+        return s.substring(lo, hi+1);
+    }
+    
+    private boolean isPalindrome(String s, int lo, int hi) {
+        while (lo < hi) {
+            if (s.charAt(lo++) != s.charAt(hi--)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+
+// 稍微改进，从最长的开始找，勉强不超时
+class Solution {
+    public String longestPalindrome(String s) {
+        if (s == null || s.length() == 0) return "";
+        int lo = 0, hi = 0;
+        for (int len = s.length(); len > 0; len--) {
+            for (int i = 0; i <= s.length() - len; i++) {
+                if (isPalindrome(s, i, i+len-1)) {
+                    return s.substring(i, i+len);
+                }
+            }
+        }
+        throw new AssertionError("Should return before");
+    }
+    
+    private boolean isPalindrome(String s, int lo, int hi) {
+        while (lo < hi) {
+            if (s.charAt(lo++) != s.charAt(hi--)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+
+// DP 存下 palindorme的判断，避免重复计算。复杂度降低到O(n^2), 但是同时也需要用到n^2的空间复杂度。
+// 这里面的数组关系，index，错综复杂，很容易出错。
+class Solution {
+    public String longestPalindrome(String s) {
+        if (s == null || s.length() == 0) return "";
+        int lo = 0, hi = 0, n = s.length();
+        boolean[][] dp = new boolean[n][n];
+        for (int i = 0; i < n; i++) {
+            dp[i][i] = true;
+        }
+        for (int len = 2; len <= n; len++) {
+            for (int i = 0; i <= n-len; i++) {
+                if (s.charAt(i) == s.charAt(i+len-1) && (i+1 >= i+len-2 || dp[i+1][i+len-2])) {
+                    if (hi - lo < len-1) {
+                        lo = i;
+                        hi = i+len-1;
+                    }
+                    dp[i][i+len-1] = true;
+                }
+            }
+        }
+        return s.substring(lo, hi+1);
+    }
+}
+
+// 可以降维成1维数组，需要特别注意，其实每次判断的时候用的是len-2时候的dp cache。例子"abcba", 答案是5，判断len=5的时候，是判断char at 0是否等于4，然后判断dp[1] 在len 等于3的时候，是否是true，而不是len 等于4的时候，这一点要特别注意。
+class Solution {
+    public String longestPalindrome(String s) {
+        if (s == null || s.length() == 0) return "";
+        int lo = 0, hi = 0, n = s.length();
+        boolean[] preLen = new boolean[n], curLen = new boolean[n];
+        for (int len = 2; len <= n; len++) {
+            boolean[] nextLen = new boolean[n];
+            for (int i = 0; i <= n-len; i++) {
+                if (s.charAt(i) == s.charAt(i+len-1) && (i+1 >= i+len-2 || preLen[i+1])) {
+                    if (hi - lo < len-1) {
+                        lo = i;
+                        hi = i+len-1;
+                    }
+                    nextLen[i] = true;
+                }
+            }
+            preLen = curLen;
+            curLen = nextLen;
+        }
+        return s.substring(lo, hi+1);
+    }
+}
+
+
+// 我有一个一位数组的想法，就是类似括号那一题，dp[i-1] 存 index i-1截止，最长的那一个，假设是j，然后判断i是否等于j-1。直觉上我觉得可能会出问题，但是想不到问题会出在哪里。可以写出来看看
+// 不一定行的通，但是上面的1维数组的解法，应该是这种解法的类似。
+
+
+// 最经典的中间往两边的解法。
+class Solution {
+    int lo, hi;
+    
+    public String longestPalindrome(String s) {
+        if (s == null || s.length() == 0) return "";
+        lo = 0;
+        hi = 0;
+        for (int i = 0; i < s.length(); i++) {
+            longestPalindrome(s, i, i);
+            longestPalindrome(s, i, i+1);
+        }
+        return s.substring(lo, hi+1);
+    }
+    
+    private void longestPalindrome(String s, int loP, int hiP) {
+       // 这里虽然增加了判断次数，但是如果是break循环之后再判断，则遇到的情况会非常棘手。有可能是char不等break的，也有可能是越界break的。
+        while (loP >= 0 && hiP < s.length() && s.charAt(loP) == s.charAt(hiP)) {
+            if (hiP - loP > hi - lo) {
+                hi = hiP;
+                lo = loP;
+            }
+            loP--;
+            hiP++;
+        }
+    }
+}
+
+

@@ -1,0 +1,38 @@
+// 这个就是33题加followup，加难度。难点在于，如果可以有相等的，尤其是出现nums[0] == nums[n-1]的情况，则一旦nums[mid] == nums[0]， 则无法判断mid的具体位置。能做的只能是lo++. 这里为什么lo++而不是hi--？ 因为我们的mid的计算方法决定的，mid永远是更偏向于lo，因为5/2=2的缘故。不过这一题只需要boolean return，可能不是特别重要。因为mid永远偏向lo，而且如果只有两个数字的剩下的时候，mid永远等于lo。这个这一题不重要，其他题目特别重要。
+// 这里我是凭印象，觉得，无法判断，则lo++. 但是如下测试条件，发生刚好把正确的lo给略过的情况。所以略过之前加一条判断。[1,0,1,1,1]， 0
+
+class Solution {
+    public boolean search(int[] nums, int target) {
+        if (nums == null || nums.length == 0) {
+            return false;
+        }
+        if (target > nums[nums.length-1] && target < nums[0]) {
+            return false;
+        }
+        int lo = 0, hi = nums.length - 1;
+        while (lo <= hi) {
+            int mid = lo + (hi - lo) / 2;
+            if (nums[mid] == target) {
+                return true;
+            } else if (nums[mid] > nums[0]) {
+                if (target >= nums[0] && target < nums[mid]) {
+                    hi = mid - 1;
+                } else {
+                    lo = mid + 1;
+                }
+            } else if (nums[mid] < nums[0]) {
+                if (target > nums[mid] && target <= nums[nums.length - 1]) {
+                    lo = mid + 1;
+                } else {
+                    hi = mid - 1;
+                }
+            } else {
+                if (nums[lo] == target) {
+                    return true;
+                }
+                lo++;
+            }
+        }
+        return false;
+    }
+}

@@ -1,0 +1,57 @@
+/*
+付费题，易错，巧妙，细节需要注意。跟1060异曲同工
+
+Given an array arr of positive integers sorted in a strictly increasing order, and an integer k.
+
+Find the kth positive integer that is missing from this array.
+
+ 
+
+Example 1:
+
+Input: arr = [2,3,4,7,11], k = 5
+Output: 9
+Explanation: The missing positive integers are [1,5,6,8,9,10,12,13,...]. The 5th missing positive integer is 9.
+Example 2:
+
+Input: arr = [1,2,3,4], k = 2
+Output: 6
+Explanation: The missing positive integers are [5,6,7,...]. The 2nd missing positive integer is 6.
+ 
+
+Constraints:
+
+1 <= arr.length <= 1000
+1 <= arr[i] <= 1000
+1 <= k <= 1000
+arr[i] < arr[j] for 1 <= i < j <= arr.length
+*/
+
+class Solution {
+    public int findKthPositive(int[] arr, int k) {
+        int lo = 0, hi = arr.length-1;
+        while (lo <= hi) {
+            int mid = lo + (hi-lo)/2;
+            // 这里必须取等于，等于k，意味着，在这个index的时候（之前），就已经missing k了
+            if (arr[mid] - mid - 1 >= k) {
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        // 当二分查找结束的时候，有 hi + 1 = lo
+        // 结果是在arr[hi] 和 arr[lo] 之间，有可能，lo = 0 或者 hi = arr.length - 1. 分别意味着两种越界情况。但是暂时不考虑
+        // 已知，当 i的时候，缺失m个，有 m = arr[i] - i - 1; 同理，在hi index情况下，缺失 m = arr[hi] - hi - 1
+        // hi的时候，已经缺失了m个，则再往后数 k-m个，就是答案。则需要返回 arr[hi] + (k-m), 推导 arr[hi] + (k -(arr[hi] - hi - 1)) = k + hi + 1, 也就是k+lo.
+        return k+lo;
+    }
+}
+
+// [1,2,3,4,5]
+// {0,1,2,3,4}
+
+// [2,4]
+// {0,1}
+// k = 1, k = 2, k = 3
+
+// arr[i] - i - 1 = m (m means missing m at index i)

@@ -1,0 +1,36 @@
+class Solution {
+    public int[] findOrder(int numCourses, int[][] prerequisites) {
+        int[] indegrees = new int[numCourses];
+        Map<Integer, List<Integer>> graph = new HashMap<>();
+        for (int[] prereq : prerequisites) {
+            int course = prereq[0], preCourse = prereq[1];
+            if (!graph.containsKey(preCourse)) {
+                graph.put(preCourse, new ArrayList<>());
+            }
+            indegrees[course]++;
+            graph.get(preCourse).add(course);
+        }
+        int index = 0;
+        int[] output = new int[numCourses];
+        Queue<Integer> queue = new LinkedList<>();
+        for (int i = 0; i < numCourses; i++) {
+            if (indegrees[i] == 0) {
+                queue.offer(i);
+            }
+        }
+        while (!queue.isEmpty()) {
+            int course = queue.poll();
+            output[index++] = course;
+            if (graph.containsKey(course)) {
+                for (int nextCourse : graph.get(course) {
+                    if (--indegrees[nextCourse] == 0) {
+                        queue.offer(nextCourse);
+                    }
+                }
+            }
+        }
+        return index == numCourses ? output : new int[0];
+    }
+}
+
+// 很神奇，上面的第六行如果去掉，直接用prereq[0] 和 prereq[1]。时间可以从12ms降低到5ms，空间从46MB到40MB，很神奇。

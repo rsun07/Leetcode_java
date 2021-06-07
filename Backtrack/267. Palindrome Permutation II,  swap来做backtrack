@@ -1,0 +1,143 @@
+// String Permutation的经典backtrack模板。
+
+// 这个的逻辑是这样的，用abc为例子，每次确定一位数。比如刚开始，先a和a换，对，a和a自己换，等于是没有换，但是要把这种情况传下去，如果不这么做，则这种情况就传不下去了。然后相当于是DFS，就到了第二位，b和b自己换，然后第三位，c和c自己换，然后输出abc。退回到之前第二位，这时候b和c换，然后到第三位，此时b和b自己换，因为b被换到第三位来了，然后输出acb。这时候到头了，再返回第二位，也到头了，返回第一位。然后a和b换，传下去，a和a换，c和c换，输出bac。倒回去，a和c换，输出bca。以此类推，输出所有。
+
+
+// 特别注意，这种方法没办法完全去重。最好是用Set作为output，二次去重。举例，如果输入是aabb，则会输出会是 ["aabb","abab","abba","abba","abab","baab","baba","bbaa","baba","baab","bbaa"]
+
+public void permute(char[] chars, int i, List<String> output) {
+    if (i == chars.length) {
+        output.add(String.valueOf(chars));
+        return;
+    }
+
+    // 特别注意，这里是从j = i 开始，也就是说，第一次是不换。要把不换的这一种情况传下去。比如abc，则需要把abc传下去，到第二位的时候，也要把abc传下去，这样输出的时候后就会包含abc。第二位的第二步，是把bc互换，变成acb，然后输出，这样就会输出acb
+
+    for (int j = i; j < chars.length; j++) {  
+        // 去重，但是要把原始的传下去      
+        if (j != i && chars[i] == chars[j]) continue;
+        Collections.swap(chars, i, j);
+        // 特别注意，这里是传i+1, 而不是j+1. 
+        permute(chars, i+1, output);
+        Collections.swap(chars, i, j);
+    }
+}
+
+
+// 解法会超时，这个几乎就是lc给的官方解法。我submit官方解法，也是超时。
+class Solution {
+    public List<String> generatePalindromes(String s) {
+        if (s == null || s.length() == 0) {
+            return Collections.emptyList();
+        } 
+        Map<Character, Integer> charToCount = new HashMap<>();
+        char[] chars = s.toCharArray();
+        for (char c : chars) {
+            charToCount.put(c, charToCount.getOrDefault(c, 0) + 1);
+        }
+        boolean hasOddCount = false;
+        for (int count : charToCount.values()) {
+            if (count % 2 != 0) {
+                if (hasOddCount) {
+                    return Collections.emptyList();
+                }
+                hasOddCount = true;
+            }
+        }
+        Set<String> output = new HashSet<>();
+        permute(chars, 0, output);
+        return new ArrayList<>(output);
+    }
+    
+    private void permute(char[] chars, int i, Set<String> output) {
+        if (i == chars.length) {
+            if (isPalindrome(chars)) {
+                output.add(String.valueOf(chars));
+            }
+            return;
+        }
+
+        for (int j = i; j < chars.length; j++) {  
+            // 去重，但是要把原始的传下去      
+            if (j != i && chars[i] == chars[j]) continue;
+            swap(chars, i, j);
+            // 特别注意，这里是传i+1, 而不是j+1. 
+            permute(chars, i+1, output);
+            swap(chars, i, j);
+        }
+    }
+    
+    private boolean isPalindrome(char[] chars) {
+        int lo = 0, hi = chars.length-1;
+        while (lo < hi) {
+            if (chars[lo++] != chars[hi--]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private void swap(char[] chars, int i, int j) {
+        char temp = chars[i];
+        chars[i] = chars[j];
+        chars[j] = temp;
+    }
+}
+
+
+// 解法2，搜集信息，生成Palindorme。每次左边放一个，右边放一个，因为我们知道每个char的count，很容易生成所有的Palindrome，还是用backtrack的方法。这种方法，不需要去重，因为同样的char不会被放到同一个位置反复生成。
+
+class Solution {
+    public List<String> generatePalindromes(String s) {
+        if (s == null || s.length() == 0) {
+            return Collections.emptyList();
+        } 
+        Map<Character, Integer> charToCount = new HashMap<>();
+        char[] chars = s.toCharArray();
+        for (char c : chars) {
+            charToCount.put(c, charToCount.getOrDefault(c, 0) + 1);
+        }
+        Character singleChar = null;
+        for (Map.Entry<Character, Integer> entry : charToCount.entrySet()) {
+            if (entry.getValue() % 2 != 0) {
+                if (singleChar != null) {
+                    return Collections.emptyList();
+                }
+                singleChar = entry.getKey();
+            }
+        }
+        chars = new char[s.length()];
+        if (singleChar != null) {
+            chars[s.length()/2] = singleChar;
+            // it's ok to not decrease the count or remove if only 1. Because in backtrack, we can check whether count is bigger than 2. But if we remove the single char (if count == 1) here, it can boost the efficiency a little bit
+            if (charToCount.get(singleChar) == 1) {
+                charToCount.remove(singleChar);
+            } else {
+                charToCount.put(singleChar, charToCount.get(singleChar)-1);
+            }
+        }
+        List<String> output = new ArrayList<>();
+        generate(0, chars, charToCount, output);
+        return output;
+    }
+    
+    private void generate(int i, char[] chars, Map<Character, Integer> charToCount, List<String> output) {
+        if (i >= chars.length / 2) {
+            output.add(String.valueOf(chars));
+            return;
+        }
+        // 在该i下，对应的任意一个char，不管count有多少人，都只会在i位置被放置一次，所以不需要去重。
+        for (Map.Entry<Character, Integer> entry : charToCount.entrySet()) {
+            int count = entry.getValue();
+            if (count > 0) {
+                char c = entry.getKey();
+                chars[i] = chars[chars.length-i-1] = c;
+                // 注意这里不能remove，因为在map的循环里，会报错。可以改value但是不能增删key
+                charToCount.put(c, count-2);
+                generate(i+1, chars, charToCount, output);
+                // be careful, here should put count back rather than count + 2
+                charToCount.put(c, count);
+            }
+        }
+    }
+}

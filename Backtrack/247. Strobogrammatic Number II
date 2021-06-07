@@ -1,0 +1,82 @@
+// 付费题, FB tag
+
+/*
+A strobogrammatic number is a number that looks the same when rotated 180 degrees (looked at upside down).
+
+Find all strobogrammatic numbers that are of length = n.
+
+Example:
+
+Input:  n = 2
+Output: ["11","69","88","96"]
+*/
+
+// 因为做了前一题判断一个String是否是的，于是直接搬过来，暴力判断。肯定是超时的。
+class Solution {
+    public List<String> findStrobogrammatic(int n) {
+        int start = n == 1 ? 0 : 1;
+        for (int i = 1; i < n; i++) {
+            start *= 10;
+        }
+        int end = n == 1 ? 10 : start*10;
+        List<String> output = new ArrayList<>();
+        for(int num = start; num < end; num++) {
+            String numStr = String.valueOf(num);
+            if (isStrobogrammatic(numStr)) {
+                output.add(numStr);
+            }
+        }
+        return output;
+    }
+    
+    private boolean isStrobogrammatic(String num) {
+        Map<Character, Character> strobos = Map.of('1', '1','0','0','8','8','6','9','9','6');
+        int lo = 0, hi = num.length() - 1;
+        while (lo <= hi) {
+            char c = num.charAt(lo);
+            if (!strobos.containsKey(c) || strobos.get(c) != num.charAt(hi)) {
+                return false;
+            }
+            lo++;
+            hi--;
+        }
+        return true;
+    }
+}
+
+
+// 要特别注意edge case。比如当n大于1的时候，就不可以有00，000这样的。但是n==1的时候就要有0
+
+class Solution {
+    private static final Map<Character, Character> pairs = Map.of('6','9','9','6');
+    private static final Set<Character> identicals = Set.of('0', '1', '8');
+    
+    public List<String> findStrobogrammatic(int n) {
+
+        if (n == 1) return List.of("0","1","8");
+        char[] chars = new char[n];
+        List<String> output = new ArrayList<>();
+        backtrack(0, chars.length-1, chars, output);
+        return output;
+    }
+    
+    private void backtrack(int lo, int hi, char[] chars, List<String> output) {
+        if (lo > hi) {
+            output.add(new String(chars));
+            return;
+        }
+        for (char digit : identicals) {
+            if (lo == 0 && digit == '0') continue;
+            chars[lo] = digit;
+            chars[hi] = digit;
+            backtrack(lo+1, hi-1, chars, output);
+        }
+        if (lo != hi) {
+            for (Map.Entry<Character, Character> entry : pairs.entrySet()) {
+                chars[lo] = entry.getKey();
+                chars[hi] = entry.getValue();
+                backtrack(lo+1, hi-1, chars, output);
+            }
+        }
+    }
+}

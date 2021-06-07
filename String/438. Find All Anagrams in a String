@@ -1,0 +1,103 @@
+// 一开始的想法是，用strStr的办法，然后还测试了一下下面这个知识点。发现两种情况Array都是深度copy
+
+/*
+int[] c1 = new int[]{1,2,3,4};
+int[] c2 = Arrays.copyOf(c1, 4), c3 = c1.clone();
+c2[2] = 100;
+c3[2] = 101;
+
+[1, 2, 3, 4]
+[1, 2, 100, 4]
+[1, 2, 101, 4]
+*/
+
+// 第一版的解法
+class Solution {
+    public List<Integer> findAnagrams(String s, String p) {
+        if (s == null || s.length() == 0 || p == null || p.length() == 0 || s.length() < p.length()) {
+            return Collections.emptyList();
+        }
+        int[] charCounts = countChars(p);
+        List<Integer> output = new ArrayList<>();
+        for (int i = 0; i <= s.length() - p.length(); i++) {
+            if (isValid(s, i, p.length(), charCounts.clone())) {
+                output.add(i);
+            }
+        }
+        return output;
+    }
+    
+    private int[] countChars(String p) {
+        int[] counts = new int[26];
+        for (char c : p.toCharArray()) {
+            counts[c-'a']++;
+        }
+        return counts;
+    }
+    
+    private boolean isValid(String s, int i, int len, int[] charCounts) {
+        for (int j = i; j < i+len; j++) {
+            if (charCounts[s.charAt(j)-'a']-- == 0) 
+                return false;
+        }
+        return true;
+    }
+}
+
+// 想了一下优化，就是如果出现了p里面不存在的，直接跳
+class Solution {
+    public List<Integer> findAnagrams(String s, String p) {
+        if (s == null || s.length() == 0 || p == null || p.length() == 0 || s.length() < p.length()) {
+            return Collections.emptyList();
+        }
+        int[] charCounts = new int[26];
+        for (char c : p.toCharArray()) {
+            charCounts[c-'a']++;
+        }
+        List<Integer> output = new ArrayList<>();
+        for (int i = 0; i <= s.length() - p.length(); i++) {
+            boolean isValid = true;
+            int[] counts = charCounts.clone();
+            for (int j = i; j < i+p.length() && isValid; j++) {
+                char c = s.charAt(j);
+                if (charCounts[c-'a'] == 0) {
+                    // cannot be i = j + 1 because there will be an i++ at the for loop
+                    i = j;
+                    isValid = false;
+                }
+                if (counts[c-'a']-- == 0) 
+                    isValid = false;
+            }
+            if (isValid) {
+                output.add(i);
+            }
+        }
+        return output;
+    }
+}
+
+// 看了答案以后，发现，可以用滑动窗口，用Arrays.equals() 来作比较。这里要注意，for循环的终止条件不再是上面的i <= s.length() - p.length()，而是下面的，要一直到s的最后，因为是根据s来判断的。
+class Solution {
+    public List<Integer> findAnagrams(String s, String p) {
+        if (s == null || s.length() == 0 || p == null || p.length() == 0 || s.length() < p.length()) {
+            return Collections.emptyList();
+        }
+        int[] pCounts = new int[26], sCounts = new int[26];
+        for (char c : p.toCharArray()) {
+            pCounts[c-'a']++;
+        }
+        List<Integer> output = new ArrayList<>();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            sCounts[c-'a']++;
+            if (i >= p.length() - 1) {
+                if (Arrays.equals(pCounts, sCounts)) {
+                    output.add(i - p.length() + 1);
+                }
+                char charToRemove = s.charAt(i - p.length() + 1);
+                sCounts[charToRemove-'a']--;
+            }
+        }
+        return output;
+    }
+}

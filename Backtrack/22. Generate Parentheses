@@ -1,0 +1,186 @@
+// 22. Generate Parentheses
+
+
+// 解法一，巧妙枚举，错误，行不通
+/*
+应该是别的题目的解法，用在了这里。想法是好的，但是很难证明不会漏掉，有点像奇技淫巧，找规律的。
+78. Subsets，是这道题目的解法。括号不适用。
+
+n = 1的时候，()
+n = 2的时候，相当于在1的情况下，左右加一个'()', 然后前后加'(' 和 ')' 。 于是得到()()，()() and (())。要去重一下
+n = 3的时候，以此类推，得到["()()()","(()())","()(())","(())()","((()))"]
+n = 4的时候，就出问题了，下面这一种，是无论如何也得不到的(())(())，因为它需要在 ())(()的前提下左右加括号，这在n=3的时候不是合法存在的。
+*/
+
+class Solution {
+    // enumation 
+    public List<String> generateParenthesis(int n) {
+        Set<String> preSet = new HashSet<>();
+        preSet.add("()");
+        for (int i = 2; i <= n; i++) {
+            Set<String> curSet = new HashSet<>();
+            for (String parenthesis : preSet) {
+                curSet.add(parenthesis + "()");
+                curSet.add("()" + parenthesis);
+                curSet.add("(" + parenthesis + ")");
+            }
+            preSet = curSet;
+        }
+        return new ArrayList<>(preSet);
+    }
+}
+
+// 2: naive brute force
+class Solution {
+    // naive brute force
+    public List<String> generateParenthesis(int n) {
+        if (n <= 0 || n > 8) {
+            throw new IllegalArgumentException("Invalide input n = " + n);  
+        }
+        char[] chars = new char[n*2];
+        List<String> output = new ArrayList<>();
+        backtrack(0, chars, output);
+        return output;
+    }
+    
+    private void backtrack(int i, char[] chars, List<String> output) {
+        if (i == chars.length) {
+            if (isValid(chars)) {
+                output.add(new String(chars));
+            }
+            return;
+        }
+        chars[i] = '(';
+        // be careful, cannot use i++ here because i will be used by next backtrack
+        backtrack(i+1, chars, output);
+        // cover it directly, don't need to back track in fact.
+        chars[i] = ')';
+        backtrack(i+1, chars, output);
+    }
+    
+    private boolean isValid(char[] chars) {
+        int count = 0;
+        for (char p : chars) {
+            if (p == ')') {
+                count--;
+                if (count < 0) {
+                    return false;
+                }
+            } else {
+                count++;
+            }
+        }
+        return count == 0 ? true : false;
+    }
+}
+
+// 3 : improved brute force. Better online valid checking
+class Solution {
+    // improved brute force
+    public List<String> generateParenthesis(int n) {
+        if (n <= 0 || n > 8) {
+            throw new IllegalArgumentException("Invalide input n = " + n);  
+        }
+        char[] chars = new char[n*2];
+        List<String> output = new ArrayList<>();
+        backtrack(0, n, n, chars, output);
+        return output;
+    }
+    
+    private void backtrack(int i, int openRemains, int closeRemains, char[] chars, List<String> output) {
+        if (i == chars.length) {
+            output.add(new String(chars));
+            return;
+        }
+        if (openRemains > 0) {
+            chars[i] = '(';
+            // be careful, cannot use i++ here because i will be used by next backtrack
+            backtrack(i+1, openRemains - 1, closeRemains, chars, output);
+        }
+        
+        if (closeRemains > 0 && closeRemains > openRemains) {
+            // cover it directly, don't need to back track in fact.
+            chars[i] = ')';
+            backtrack(i+1, openRemains, closeRemains - 1, chars, output);
+        }
+    }
+}
+
+
+// 把backtrack写成用手动stack存状态的模式。费了一番脑子，存两个状态，其实还需要存一个i状态，index。不过可以用2*n-openRemain-closeRemain 来推算，就省去了。易错点和难点在于如何存chars的状态，需要hard copy array。这里用string的话可能会更容易。
+class Solution {
+    public List<String> generateParenthesis(int n) {
+        if (n <= 0) {
+            return Collections.emptyList();
+        }
+        List<String> output = new ArrayList<>();
+        Stack<int[]> stack = new Stack<>();
+        Stack<char[]> charStack = new Stack<>();
+        stack.push(new int[]{n, n});
+        charStack.push(new char[n*2]);
+        while (!stack.isEmpty()) {
+            int[] status = stack.pop();
+            int openRemain = status[0], closeRemain = status[1];
+            char[] chars = charStack.pop();
+            if (openRemain == 0 && closeRemain == 0) {
+                output.add(String.valueOf(chars));
+                continue;
+            }
+            if (openRemain > 0) {
+                stack.push(new int[]{openRemain-1, closeRemain});
+                chars[2*n-openRemain-closeRemain] = '(';
+                charStack.push(chars);
+            }
+            if (openRemain < closeRemain /* also implies closeRemain != 0 because openRemain >= 0 always true*/) {
+                stack.push(new int[]{openRemain, closeRemain-1});
+                // here must do deep copy. otherwise will change the value already pushed into the stack. Arrays.copyOf(chars, 2*n) this is still swallow copy
+                if (openRemain > 0) {
+                    char[] copy = new char[n*2];
+                    for (int i = 0; i < n*2; i++) {
+                        copy[i] = chars[i];
+                    }
+                    chars = copy;
+                }
+                chars[2*n-openRemain-closeRemain] = ')';
+                charStack.push(chars);
+            }
+        }
+        return output;
+    }
+}
+
+// 同上面的方法，用String存状态，更容易。
+class Solution {
+    public List<String> generateParenthesis(int n) {
+        if (n <= 0) {
+            return Collections.emptyList();
+        }
+        List<String> output = new ArrayList<>();
+        Stack<int[]> stack = new Stack<>();
+        Stack<String> pStack = new Stack<>();
+        stack.push(new int[]{n, n});
+        // 注意，这里push了empty，所以前面一定要提前处理n=0的情况，否则会返回[""]
+        pStack.push("");
+        while (!stack.isEmpty()) {
+            int[] status = stack.pop();
+            int openRemain = status[0], closeRemain = status[1];
+            String parenthesis = pStack.pop();
+            if (openRemain == 0 && closeRemain == 0) {
+                output.add(parenthesis);
+                continue;
+            }
+            if (openRemain > 0) {
+                stack.push(new int[]{openRemain-1, closeRemain});
+                String newParentheis = parenthesis + '(';
+                pStack.push(newParentheis);
+            }
+            if (openRemain < closeRemain /* also implies closeRemain != 0 because openRemain >= 0 always true*/) {
+                stack.push(new int[]{openRemain, closeRemain-1});
+                // here must do deep copy. otherwise will change the value already pushed into the stack. Arrays.copyOf(chars, 2*n) this is still swallow copy
+                String newParentheis = parenthesis + ')';
+                pStack.push(newParentheis);
+            }
+        }
+        return output;
+    }
+}

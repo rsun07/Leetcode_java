@@ -1,0 +1,270 @@
+// 131. Palindrome Partitioning 的follow up 或者说变种。
+// 刚做完131题，这题容易陷入到同样的思路中去。用dfs或者bfs做，会超时。我想了很多办法，做优化，做到极值也没办法不超时。
+
+// 解法1：优化后的DFS
+class Solution {
+    public int minCut(String s) {
+        if (s == null || s.length() == 0) {
+            return 0;
+        }
+        if (isPalindrome(s, 0, s.length() - 1)) {
+            return 0;
+        }
+        
+        int minCut = 1, hi = s.length() - 1;
+        
+        List<Integer> candidates = new ArrayList<>();
+        candidates.add(0);
+        
+        
+        // actually, range.hi never change, it's always s.length() - 1;
+        // 一开始，我在candidates里面存 List<String>, 跟131题一样，后来意识到，其实我只需要存最后一个String就可以，最后一个String其实是一个Range，有lo 和 hi两个index就可以加上String s确定。再后来我意识到，hi永远都是s.length()-1， 所以只需要存lo的index就够了
+        while (!candidates.isEmpty()) {
+            List<Integer> newCandidates = new ArrayList<>();
+            for (int index : candidates) {
+                for (int i = index + 1; i <= hi; i++) {
+                    if (!isPalindrome(s, index, i-1)) {
+                        continue;
+                    }
+
+                    if (isPalindrome(s, i, hi)) {
+                        return minCut;
+                    }
+                    newCandidates.add(i);
+                }
+            }
+            candidates = newCandidates;
+            minCut++;
+        }
+        return s.length() - 1;
+    }
+    
+    private Map<Range, Boolean> cache = new HashMap<>();
+    
+    private boolean isPalindrome(String s, int lo, int hi) {
+        if (lo >= hi) {
+            return true;
+        }
+
+        Range range = new Range(lo, hi);
+        if(cache.containsKey(range)) {
+            return cache.get(range);
+        }
+        
+        while (lo < hi) {
+            if (s.charAt(lo++) != s.charAt(hi--)) {
+                cache.put(range, false);
+                return false;
+            }
+        }
+        cache.put(range, true);
+        return true;
+    }
+}
+
+class Range {
+    int lo;
+    int hi;
+    
+    public Range(int lo, int hi) {
+        this.lo = lo;
+        this.hi = hi;
+    }
+    
+    public int hashCode() {
+        return hi+hi+lo;
+    }
+}
+
+
+
+
+// 解法1优化：HashMap算hash很慢，用boolean[][]数组做cache，会更快。还是会超时
+class Solution {
+    private Boolean[][] cache;
+    
+    public int minCut(String s) {
+        if (s == null || s.length() == 0) {
+            return 0;
+        }
+        
+        int minCut = 1, N = s.length();
+        this.cache = new Boolean[N][N];
+        if (isPalindrome(s, 0, N - 1)) {
+            return 0;
+        }
+        
+        List<Integer> candidates = new ArrayList<>();
+        candidates.add(0);
+        
+        // actually, range.hi never change, it's always s.length() - 1;
+        while (!candidates.isEmpty()) {
+            List<Integer> newCandidates = new ArrayList<>();
+            for (int index : candidates) {
+                for (int i = index + 1; i < N; i++) {
+                    if (!isPalindrome(s, index, i-1)) {
+                        continue;
+                    }
+
+                    if (isPalindrome(s, i, N-1)) {
+                        return minCut;
+                    }
+                    newCandidates.add(i);
+                }
+            }
+            candidates = newCandidates;
+            minCut++;
+        }
+        return N - 1;
+    }
+    
+    
+    private boolean isPalindrome(String s, int lo, int hi) {
+        if (lo >= hi) {
+            return true;
+        }
+
+        if(cache[lo][hi] != null) {
+            return cache[lo][hi];
+        }
+        
+        while (lo < hi) {
+            // Attention!!! if we use lo and hi as the cache key, then we cannot use s.charAt(lo++) != s.charAt(hi--) here. the lo and hi we put into cache is not the lo and hi we really refers to
+            if (s.charAt(lo) != s.charAt(hi)) {
+                cache[lo][hi] = false;
+                return false;
+            }
+            lo++;
+            hi--;
+        }
+        cache[lo-1][hi+1] = true;
+        return true;
+    }
+}
+
+
+
+
+
+// 解法2： DFS，类似的，还是会超时，因为有一个test case是，非常长的String，必须拆分成每一个char一个String才行。这就让BFS和DFS都必须坚持到最后，遍历所有情况。但是比BFS稍微快一点点，更长一些的String不超时。
+class Solution {
+    private Boolean[][] cache;
+    private char[] chars;
+    private int N, minCut;
+    
+    public int minCut(String s) {
+        if (s == null || s.length() == 0) {
+            return 0;
+        }
+        
+        this.N = s.length();
+        this.minCut = N-1;
+        this.chars = s.toCharArray();
+        this.cache = new Boolean[N][N];
+        if (isPalindrome(0, N-1)) {
+            return 0;
+        }
+        minCut(0, 1);
+        return minCut;
+    }
+    
+    private void minCut(int index, int cutCount) {
+        for (int i = index + 1; i < N; i++) {
+            // because lo and hi are inclusive, so here hi = i-1
+            if (!isPalindrome(index, i-1)) {
+                continue;
+            }
+            if (isPalindrome(i, N-1)) {
+                minCut = Math.min(minCut, cutCount);
+                // cutCount is good, so no need to continue;
+                return;
+            } else {
+                minCut(i, cutCount + 1);
+            }
+        }
+    }
+    
+    
+    private boolean isPalindrome(int lo, int hi) {
+        if (lo >= hi) {
+            return true;
+        }
+
+        if(cache[lo][hi] != null) {
+            return cache[lo][hi];
+        }
+        
+        while (lo < hi) {
+            // Attention!!! if we use lo and hi as the cache key, then we cannot use s.charAt(lo++) != s.charAt(hi--) here. the lo and hi we put into cache is not the lo and hi we really refers to
+            if (chars[lo] != chars[hi]) {
+                cache[lo][hi] = false;
+                return false;
+            }
+            lo++;
+            hi--;
+        }
+        cache[lo-1][hi+1] = true;
+        return true;
+    }
+}
+
+
+
+
+
+// 解法3： DP，看了评论Discuss里面的，非常的巧妙。
+// 简单讲，思路就是，先从String length是1开始，然后考虑String length是2，3,... N。当String length是k的时候，如果char at 0 和char at k-1相等，且[1,k-1)这个String 是Palindrome，则整个String是Palindrome，需要0次分割。如果上面的条件不符合，则查看 char at 1 和 char at k-1, 注意这里，还是k-1, 而不是和k-2比了。如果符合条件，则 [2, k-1) 这个String是Palindrome，至于(0,2)，之前计算过了，所以多少次cut，就是cuts[2] + 1次。以此类推，下面代码呈现的，就是 DP[hi] = 0 or Min(DP[lo] + 1). 0 的条件是substring[0,hi] include char at hi, 是Palindrome。后一个成立的条件是 chars[lo] == chars[hi] && (lo+1 >= hi-1 || isPalindrome[lo+1][hi-1]。一定有解，最差的解，就是char at k单独作为一个String，前面的DP[hi-1]是前一步计算过的，可能最差的结果就是每一个char拆分成一个String
+
+// 值得一提的是，这一题我尝试了用s.chatAt() 和 先把s变成一个char array，用array的index直接access char。结果前者更慢很多，26ms。后者快很多，9ms
+
+class Solution {
+    public int minCut(String s) {
+        if (s == null) {
+            return 0;
+        }
+        int N = s.length();
+        int[] cuts = new int[N];
+        boolean[][] isPalindrome = new boolean[N][N];
+        char[] chars = s.toCharArray();
+        for (int hi = 0; hi < N; hi++) {
+            // here hi is the max index, not the length of DP. e.g. when we consider the String length is m, hi = m - 1, so max cut is hi, that's to say, m-1
+            cuts[hi] = hi;
+            for (int lo = 0; lo <= hi; lo++) {
+                if (chars[lo] == chars[hi] && (lo+1 >= hi-1 || isPalindrome[lo+1][hi-1])) {
+                    isPalindrome[lo][hi] = true;
+                    cuts[hi] = lo == 0 ? 0 : Math.min(cuts[hi], cuts[lo-1] + 1);
+                }
+            }
+        }
+        return cuts[N-1];
+    }
+}
+
+
+// 降维成一位数组存isPalindrome
+class Solution {
+    public int minCut(String s) {
+        if (s == null) {
+            return 0;
+        }
+        int N = s.length();
+        int[] minCuts = new int[N];
+        // boolean数组的意义：isPalindrome[j] 意味着从j到i-1，是否是palindrome。因为我们永远都是检查，从某一个j到i-1是否是，所以不需要二维数组，每次只需要上一轮的结果就行了。
+        boolean[] isPalindrome = new boolean[N];
+        for (int i = 1; i < N; i++) {
+            // for length N string, min cuts at most N-1
+            minCuts[i] = i;
+            // 特别注意这里j可以等于i，意味着只取最后一个char，然后前面的所有。
+            for (int j = 0; j <= i; j++) {
+                if (s.charAt(i) == s.charAt(j) && (j+1 >= i-1 || isPalindrome[j+1])) {
+                    isPalindrome[j] = true;
+                    minCuts[i] = Math.min(minCuts[i], j > 0 ? minCuts[j-1] + 1 : 0);
+                } else {
+                    // 特别要注意，如果是false，要设成false，因为这里没有重头来过，没有default false这一个
+                    isPalindrome[j] = false;
+                }
+            }
+        }
+        return minCuts[N-1];
+    }
+}

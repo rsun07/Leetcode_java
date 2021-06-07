@@ -1,0 +1,83 @@
+// 简单题，但是出来一个知识点。
+
+class Solution {
+    public boolean isSubsequence(String s, String t) {
+        int si = 0;
+        for (int i = 0; i < t.length() && si < s.length(); i++) {
+            if (s.charAt(si) == t.charAt(i)) {
+                si++;
+            }
+        }
+        return si == s.length();
+    }
+}
+
+// 为了解决followup，就需要建立一个char 和 index的映射，就不需要每次都过一遍t。
+// FB的面试，大概率会问时间复杂度。这个有点棘手。如果两个都是'aaaaaaa..a'，这样，应该是n平方。里面那个index的循环，永远要从0找到i。如果改成binary search，就是nlogn
+
+class Solution {
+    public boolean isSubsequence(String s, String t) {
+        List<Integer>[] indexes = new List[26];
+        // 这里有一个bug，所有26个字母，会被赋予同一个ArrayList，以至于最后出错. 稍微改正就可以通过。
+        Arrays.fill(indexes, new ArrayList<>());
+        
+        for (int i = 0; i < t.length(); i++) {
+            indexes[t.charAt(i)-'a'].add(i);
+        }
+                
+        int lastIndex = -1;
+        for (char c : s.toCharArray()) {
+            if (indexes[c-'a'].isEmpty()) {
+                return false;
+            }
+            boolean findNext = false;
+            for (int index : indexes[c-'a']) {
+                if (index > lastIndex) {
+                    lastIndex = index;
+                    findNext = true;
+                    break;
+                }
+            }
+            if (!findNext) return false;
+        }
+        return true;
+    }
+}
+
+// 改成二分查找
+// "aaaaaaa", "bbaaaaa" 这个case也是可以过的，每次都要找下一个a。一开始写错了，二分查找的while写成了if，debug好久都没发现。
+class Solution {
+    public boolean isSubsequence(String s, String t) {
+        List<Integer>[] indexes = new List[26];
+        for (int i = 0; i < 26; i++) {
+            indexes[i] = new ArrayList<>();
+        }
+        
+        for (int i = 0; i < t.length(); i++) {
+            indexes[t.charAt(i)-'a'].add(i);
+        }
+                
+        int lastIndex = -1;
+        for (char c : s.toCharArray()) {
+            if (indexes[c-'a'].isEmpty()) {
+                return false;
+            }
+            boolean findNext = false;
+            List<Integer> charIndexes = indexes[c-'a'];
+            // 特别注意，这里的lo是charIndexes里的index，而lastIndex是t和s match的index，不是同一码事。所以每次都要从0开始，而不是从lastIndex开始二分查找
+            int lo = 0, hi = charIndexes.size() - 1;
+            while (lo <= hi) {
+                int mid = lo + (hi - lo)/2;
+                if (charIndexes.get(mid) <= lastIndex) {
+                    lo = mid + 1;
+                } else {
+                    findNext = true;
+                    hi = mid - 1;
+                }
+            }
+            if (!findNext) return false;
+            lastIndex = charIndexes.get(lo);
+        }
+        return true;
+    }
+}

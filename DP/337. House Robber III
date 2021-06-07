@@ -1,0 +1,62 @@
+// 一开始犯了错误，这个错误就好比 House Robber I 里的，取奇数或者偶数。我先做了House Robber I，还写下了不能犯这样的错误，居然还是犯了错误。
+// 并不是按列取，比如左右子树，不一定相邻的层不能同时取，比如左子树的第二行跟右子树的第三行，就可以同时取。
+
+// 正确的解法
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+class Solution {
+    public int rob(TreeNode root) {
+        return help(root)[0];
+    }
+    
+    private int[] help(TreeNode root) {
+        if (root == null) {
+            return new int[]{0, 0};
+        }
+        int[] left = help(root.left);
+        int[] right = help(root.right);
+        int preMax = left[0] + right[0], max = Math.max(preMax, left[1] + right[1] + root.val);
+        return new int[]{max, preMax};
+    }
+}
+
+// 错误的解法
+class Solution {
+    public int rob(TreeNode root) {
+        int preTwoMax = 0, preMax = 0;
+        Queue<TreeNode> queue = new LinkedList<>();
+        if (root != null) {
+            queue.offer(root);
+        }
+        while (!queue.isEmpty()) {
+            int size = queue.size(), sum = 0;
+            for (int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                sum += node.val;
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+            int curMax = Math.max(preMax, preTwoMax + sum);
+            preTwoMax = preMax;
+            preMax = curMax;
+        }
+        return preMax;
+    }
+}

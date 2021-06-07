@@ -1,0 +1,22 @@
+// 这一题，之前好几次刷题，出于各种原因，都没有做。可能是觉得太难了。也可能以前是付费题？
+//  看了一个视频，https://www.youtube.com/watch?v=Ox0TenN3Zpg&feature=emb_logo&ab_channel=NeetCode。讲解的非常好
+// 我后来发现，遇到这类问题，只要先枚举出前面几个例子，然后找规律，往往可以有所突破。
+
+// 假设有5个node，1，2，3，4，5。记住这是binary search tree，特性就是，left sub tree，所有，记住是所有的node，都要小于root。right类似，所有，所有，所有的node，都要大于root。枚举的话，有五种root的情况，也就是1，2，3，4，5各自作为root。当1为root的时候，所有其他的子树只能被放到right sub tree里面。问题就变成了，2-5四个数字，会有几种情况。当2为root的时候，1只能在left sub tree，3-5只能在right sub tree。所以情况演变成了，3-5三个数字，有几种情况。当3为root的时候，1，2只能在left，4-5只能在right，就变成了 dp[2] * dp[2] 的排列组合。所以很明显是一个dp问题。
+
+class Solution {
+    public int numTrees(int n) {
+        if (n < 1) {
+            throw new IllegalArgumentException("Invalid input n: " + n);
+        }
+        int[] dp = new int[n+1];
+        dp[0] = dp[1] = 1;
+        for (int i = 2; i <= n; i++) {
+            int lo = 0, hi = i-1;
+            while(lo < i) {
+                dp[i] += dp[lo++] * dp[hi--];
+            }
+        }
+        return dp[n];
+    }
+}

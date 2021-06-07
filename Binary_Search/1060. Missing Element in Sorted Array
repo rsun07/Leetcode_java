@@ -1,0 +1,63 @@
+/*
+付费题，易错，巧妙，细节需要注意。跟1539异曲同工，就是有一点点差别。
+
+Given an integer array nums which is sorted in ascending order and all of its elements are unique and given also an integer k, return the kth missing number starting from the leftmost number of the array.
+
+ 
+
+Example 1:
+
+Input: nums = [4,7,9,10], k = 1
+Output: 5
+Explanation: The first missing number is 5.
+Example 2:
+
+Input: nums = [4,7,9,10], k = 3
+Output: 8
+Explanation: The missing numbers are [5,6,8,...], hence the third missing number is 8.
+Example 3:
+
+Input: nums = [1,2,4], k = 3
+Output: 6
+Explanation: The missing numbers are [3,5,6,7,...], hence the third missing number is 6.
+ 
+
+Constraints:
+
+1 <= nums.length <= 5 * 104
+1 <= nums[i] <= 107
+nums is sorted in ascending order, and all the elements are unique.
+1 <= k <= 108
+ 
+
+Follow up: Can you find a logarithmic time complexity (i.e., O(log(n))) solution?
+*/
+
+class Solution {
+    public int missingElement(int[] arr, int k) {
+        int lo = 0, hi = arr.length-1;
+        while (lo <= hi) {
+            int mid = lo + (hi-lo)/2;
+            // 这里必须取等于，等于k，意味着，在这个index的时候（之前），就已经missing k了
+            if (arr[mid] - mid - arr[0] >= k) {
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        // At the end of the loop, lo = hi + 1,
+        // and the kth missing is in-between arr[hi] and arr[lo].
+        // The number of integers missing before arr[hi] is
+        // arr[hi] - hi - arr[0] -->
+        // the number to return is
+        // hi 这个位置，缺失了 m = arr[hi] - hi - arr[0] 个，那么从这里再往后数 k - m 个，就会是结果
+        // arr[hi] + (k - (arr[hi] - hi - arr[0]))
+        return k + lo + arr[0] - 1;
+    }
+}
+
+
+// 如果一个不少，则 arr[i] = arr[0] + i;
+// arr[i] - i - arr[0] = m (m means missing m at index i)
+
+// 就是把1539题里的1换成arr[0]

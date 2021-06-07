@@ -1,0 +1,98 @@
+// 这一题有几个易错点，最主要的还是去重，去重和处理已经取，有一点麻烦。这个也算是经典题。
+
+// 错误的解法
+class Solution {
+    public List<List<Integer>> permuteUnique(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return Collections.emptyList();
+        }
+        Arrays.sort(nums);
+        List<List<Integer>> output = new ArrayList<>();
+        backtrack(nums, new boolean[nums.length], new ArrayList<Integer>(), output);
+        return output;
+    }
+    
+    private void backtrack(int[] nums, boolean[] taken, List<Integer> permutation, List<List<Integer>> output) {
+        if (permutation.size() == nums.length) {
+            output.add(new ArrayList<>(permutation));
+            return;
+        }
+        int i = 0;
+        while (i < nums.length) {
+            if (!taken[i]) {
+                taken[i] = true;
+                permutation.add(nums[i]);
+                backtrack(nums, taken, permutation, output);
+                taken[i] = false;
+                permutation.remove(permutation.size()-1);
+                do {++i;} while(i < nums.length && nums[i] == nums[i-1]);
+            }
+            // 如果taken[i] = true, i不会增加，死循环。
+        }
+    }
+}
+
+// 正确的解法，有一点点乱。
+class Solution {
+    public List<List<Integer>> permuteUnique(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return Collections.emptyList();
+        }
+        Arrays.sort(nums);
+        List<List<Integer>> output = new ArrayList<>();
+        backtrack(nums, new boolean[nums.length], new ArrayList<Integer>(), output);
+        return output;
+    }
+    
+    private void backtrack(int[] nums, boolean[] taken, List<Integer> permutation, List<List<Integer>> output) {
+        if (permutation.size() == nums.length) {
+            output.add(new ArrayList<>(permutation));
+            return;
+        }
+        int i = 0;
+        while (i < nums.length) {
+            if (taken[i]) {
+                i++;
+                continue;
+            }
+            taken[i] = true;
+            permutation.add(nums[i]);
+            backtrack(nums, taken, permutation, output);
+            taken[i] = false;
+            permutation.remove(permutation.size()-1);
+            do {++i;} while(i < nums.length && nums[i] == nums[i-1]);
+        }
+    }
+}
+
+
+// 2020年3月的解法，更合理一些。就是有一点点难想到。
+class Solution {
+    private List<List<Integer>> result;
+    public List<List<Integer>> permuteUnique(int[] nums) {
+        result = new ArrayList<>();
+        if (nums == null || nums.length == 0) return result;
+        Arrays.sort(nums);
+        backtrack(nums, new LinkedList<>(), new boolean[nums.length]);
+        return result;
+    }
+    
+    private void backtrack(int[] nums, List<Integer> list, boolean[] taken) {
+        if (list.size() == nums.length) {
+            result.add(new ArrayList(list));
+            return;
+        }
+        
+        for (int i = 0; i < nums.length; i++) {
+            if(taken[i] || i > 0 && nums[i] == nums[i-1] && !taken[i - 1]) continue;
+            
+            taken[i] = true;
+            list.add(nums[i]);
+            
+            backtrack(nums, list, taken);
+            
+            list.remove(list.size() - 1);
+            taken[i] = false;
+        }
+    }
+}

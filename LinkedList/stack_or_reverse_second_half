@@ -1,0 +1,62 @@
+143. Reorder List
+234. Palindrome Linked List
+
+两道题目类似，两种解法，要么就是用stack，可以让后半部分倒过来。
+还有一种解法，就是先用slow fast两个指针，找到list的中点。然后把中点以后的reverse翻转过来，这样就可以看成是有两个list，再进行比较或者操作。
+
+需要注意的是，其实break在哪里不是特别重要，我总是过度纠结 当list的size是奇数和偶数的时候，slow fast跑出来的结果是不一样的。
+
+第一个题目，很巧妙，因为可以忽略2个元素，不用倒转。
+第二个题目，其实奇数的时候，可以停在单独的那一个element那边，因为反正要反转，是原list多一个还是翻转后的list多一个，不是很重要，因为都在最后。
+
+234的解法
+
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public boolean isPalindrome(ListNode head) {
+        if (head == null || head.next == null) {
+            return true;
+        }
+        ListNode splitPoint = findSplitPoint(head);
+        ListNode head2 = reverseSecondHalf(splitPoint);
+        while (head2 != null) {
+            if (head.val != head2.val) {
+                return false;
+            }
+            head = head.next;
+            head2 = head2.next;
+        }
+        return true;
+    }
+    
+    private ListNode findSplitPoint(ListNode head) {
+        ListNode fast = head, slow = head;
+        while (fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+        // here can return slow. it doesn't matter
+        // But should be careful, if here return slow only, then in line 31, should be while (head != null && head2 != null). or change to while (head != null). because now, head has same size as head2 list or one less
+        return fast == null ? slow : slow.next;
+    }
+    
+    private ListNode reverseSecondHalf(ListNode head) {
+        ListNode pre = null;
+        while (head != null) {
+            ListNode next = head.next;
+            head.next = pre;
+            pre = head;
+            head = next;
+        }
+        return pre;
+    }
+}

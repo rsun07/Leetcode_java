@@ -1,0 +1,76 @@
+// DFS一定要注意查重。因为这个是可以有环的graph
+class Solution {
+    public boolean canReach(int[] arr, int start) {
+        if (start < 0 || start >= arr.length) {
+            return false;
+        }
+        Stack<Integer> stack = new Stack<>();
+        boolean[] visited = new boolean[arr.length];
+        stack.push(start);
+        while (!stack.isEmpty()) {
+            // i must within index range if it is from stack
+            int i = stack.pop();
+            visited[i] = true;
+            // arr[i] is non-negative as described in the question
+            if (arr[i] == 0) {
+                return true;
+            }
+            if (i + arr[i] < arr.length && !visited[i+arr[i]]) {
+                stack.push(i + arr[i]);
+            }
+            if (i- arr[i] >= 0 && !visited[i-arr[i]]) {
+                stack.push(i - arr[i]);
+            }
+        }
+        return false;
+    }
+}
+
+// BFS 稍微快一点点
+class Solution {
+    public boolean canReach(int[] arr, int start) {
+        if (start < 0 || start >= arr.length) {
+            return false;
+        }
+        Queue<Integer> queue = new LinkedList<>();
+        boolean[] visited = new boolean[arr.length];
+        queue.offer(start);
+        while (!queue.isEmpty()) {
+            // i must within index range if it is from stack
+            int i = queue.poll();
+            visited[i] = true;
+            // arr[i] is non-negative as described in the question
+            if (arr[i] == 0) {
+                return true;
+            }
+            if (i + arr[i] < arr.length && !visited[i+arr[i]]) {
+                queue.offer(i + arr[i]);
+            }
+            if (i- arr[i] >= 0 && !visited[i-arr[i]]) {
+                queue.offer(i - arr[i]);
+            }
+        }
+        return false;
+    }
+}
+
+// 递归 DFS
+class Solution {
+    public boolean canReach(int[] arr, int start) {
+        if (dfs(start, arr, new boolean[arr.length])) {
+            return true;
+        }
+        return false;
+    }
+    
+    private boolean dfs(int i, int[] arr, boolean[] visited) {
+        if (i < 0 || i >= arr.length || visited[i]) {
+            return false;
+        }
+        if (arr[i] == 0) {
+            return true;
+        }
+        visited[i] = true;
+        return dfs(i-arr[i], arr, visited) || dfs(i+arr[i], arr, visited);
+    }
+}

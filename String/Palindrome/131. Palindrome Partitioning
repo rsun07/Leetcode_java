@@ -1,0 +1,207 @@
+// 这道题是比较难的，2021年1月，我再次做题刚开始的想法，是要递归做。但是如何避免重复？比如DP(0,3) + DP(3,5), DP(0,4) + DP(4,5) 两种，到最后都可以拆分成，每一个char自己一个String，都是Parlindrome。 比如先看切一刀的情况，然后切一刀的前一半后一半都可以各自再切一刀，演化成切两刀的情况，以此类推。
+// 我想到了以前做的时候，要cache。看了答案之后，才发现，应该这样做。有一个List of String，刚开始就只有一个element，就是输入的这个string。每次只切一刀。想想办法把string一分为二，检查前后是否都是Palindrome，如果是的话，就加入output当中，然后把前后两块当成一个新的List放进去。第二步，只看后半部分，前半部分不动，以此类推，看看后半部分能不能拆成两个Palindrome。一直做到最后没有为止。
+// 这个方法，刚拿到肯定有一个疑问，因为你每次只查看第二部分，会不会忽略掉一些？应该是不会的，因为前半部分不需要再拆分了，如果可以有拆分，那么在判断更早的candidate的时候，就检查过了。
+// 要特别注意的一点是，在判断最后一部分能不能拆成两半的时候，只要前一部分是Palindrome，就要把这个加入到candidates里面，因为后半部分目前不是，但是在下一步拆分以后可能是。
+
+class Solution {
+    public List<List<String>> partition(String s) {
+        List<List<String>> output = new ArrayList<>();
+        if (s == null || s.length() == 0) {
+            return output;
+        }
+        Map<String, Boolean> isPalindromeCache = new HashMap<>();
+        if (isPalindrome(s, isPalindromeCache)) {
+            output.add(List.of(s));
+        }
+        
+        Queue<List<String>> candidates = new LinkedList<>();
+        candidates.add(List.of(s));
+        
+        while (!candidates.isEmpty()) {
+            List<String> candidate = candidates.poll();
+            // everytime we only check whether last word can be split into two palindrome word
+            String lastWord = candidate.get(candidate.size()-1);
+            // attention for the i start and end. Must split into two part. i max is lastWord.length() - 1, so never get full LastWord in firstPart nor secondPart
+            for (int i = 1; i < lastWord.length(); i++) {
+                String firstPart = lastWord.substring(0, i);
+                if (!isPalindrome(firstPart, isPalindromeCache)) {
+                    continue;
+                }
+                
+                String secondPart = lastWord.substring(i);
+                // even though second part isn't parlindrome, we still need to add this split into candidates. Because the second part could split to two Palindrome words even though itself isn't palindrome
+                List<String> newCandidate = new ArrayList<>(candidate);
+                // remove lastWord
+                newCandidate.remove(newCandidate.size()-1);
+                newCandidate.add(firstPart);
+                newCandidate.add(secondPart);
+                candidates.offer(newCandidate);
+                
+                if (isPalindrome(secondPart, isPalindromeCache)) {
+                    // don't need hard copy as we will never modify newCandidate values
+                    output.add(newCandidate);
+                }
+            }
+        }
+        return output;
+    }
+    
+    private boolean isPalindrome(String s, Map<String, Boolean> isPalindromeCache) {
+        if (s.length() < 2) {
+            return true;
+        }
+        if (isPalindromeCache != null && isPalindromeCache.containsKey(s)) {
+            return isPalindromeCache.get(s);
+        }
+        int lo = 0, hi = s.length() - 1;
+        while (lo < hi) {
+            if (s.charAt(lo++) != s.charAt(hi--)) {
+                isPalindromeCache.put(s, false);
+                return false;
+            }
+        }
+        isPalindromeCache.put(s, true);
+        return true;
+    }
+}
+
+
+// 受到132题的启发，其实不需要一直call substring，只需要存indexes，最后输入output的时候substring就可以了。不过这个还是很慢，究其原因，应该是很多substring 操作其实是重复的，可以cache起来。
+
+class Solution {    
+    public List<List<String>> partition(String s) {
+        List<List<String>> output = new ArrayList<>();
+        if (s == null || s.length() == 0) {
+            return output;
+        }
+        
+        int N = s.length();
+        Queue<List<Integer>> candidates = new LinkedList<>();
+        candidates.add(List.of(0));
+        
+        if (isPalindrome(s, 0, N-1)) {
+            output.add(List.of(s));
+        }
+        
+        while (!candidates.isEmpty()) {
+            List<Integer> candidate = candidates.poll();
+            // everytime we only check whether last word can be split into two palindrome word
+            int lo = candidate.get(candidate.size()-1);
+            for (int hi = lo + 1; hi < N; hi++) {
+                if (!isPalindrome(s, lo, hi - 1)) {
+                    continue;
+                }
+                
+                // even though second part isn't parlindrome, we still need to add this split into candidates. Because the second part could split to two Palindrome words even though itself isn't palindrome
+                List<Integer> newCandidate = new ArrayList<>(candidate);
+                newCandidate.add(hi);
+                candidates.offer(newCandidate);
+                
+                if (isPalindrome(s, hi, N-1)) {
+                    // don't need hard copy as we will never modify newCandidate values
+                    List<String> strs = new ArrayList<>();
+                    for (int i = 0; i < newCandidate.size(); i++) {
+                        if (i == newCandidate.size() - 1) {
+                            strs.add(s.substring(newCandidate.get(i), s.length()));
+                        } else {
+                            strs.add(s.substring(newCandidate.get(i), newCandidate.get(i+1)));
+                        }
+                    }
+                    output.add(strs);
+                }
+            }
+        }
+        return output;
+    }
+    
+    private boolean isPalindrome(String s, int lo, int hi) {
+        if (lo >= hi) {
+            return true;
+        }
+        while (lo < hi) {
+            if (s.charAt(lo++) != s.charAt(hi--)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+// 上面的方法，优化。加上substring的cache，然后再把s.charAt(i) 全部换成 chars[i] 操作。
+// 上面的方法runtime 32ms, 加上isPalCache只有居然变成了68ms。不知道为什么反而增加了
+// 加上substring cache，也并没有太大影响，34ms
+// 改String 为 chars，反而更慢了，60ms，不知道为什么
+class Solution {    
+    private String[][] substrCache;
+    private char[] chars; 
+    
+    public List<List<String>> partition(String s) {
+        List<List<String>> output = new ArrayList<>();
+        if (s == null || s.length() == 0) {
+            return output;
+        }
+        
+        int N = s.length();
+        Queue<List<Integer>> candidates = new LinkedList<>();
+        candidates.add(List.of(0));
+        this.substrCache = new String[N+1][N+1];
+        this.chars = s.toCharArray();
+        
+        if (isPalindrome(0, N-1)) {
+            output.add(List.of(s));
+        }
+        
+        while (!candidates.isEmpty()) {
+            List<Integer> candidate = candidates.poll();
+            // everytime we only check whether last word can be split into two palindrome word
+            int lo = candidate.get(candidate.size()-1);
+            for (int hi = lo + 1; hi < N; hi++) {
+                if (!isPalindrome(lo, hi - 1)) {
+                    continue;
+                }
+                
+                // even though second part isn't parlindrome, we still need to add this split into candidates. Because the second part could split to two Palindrome words even though itself isn't palindrome
+                List<Integer> newCandidate = new ArrayList<>(candidate);
+                newCandidate.add(hi);
+                candidates.offer(newCandidate);
+                
+                if (isPalindrome(hi, N-1)) {
+                    // don't need hard copy as we will never modify newCandidate values
+                    List<String> strs = new ArrayList<>();
+                    for (int i = 0; i < newCandidate.size(); i++) {
+                        if (i == newCandidate.size() - 1) {
+                            strs.add(getSubstring(newCandidate.get(i), N));
+                        } else {
+                            strs.add(getSubstring(newCandidate.get(i), newCandidate.get(i+1)));
+                        }
+                    }
+                    output.add(strs);
+                }
+            }
+        }
+        return output;
+    }
+    
+    private boolean isPalindrome(int lo, int hi) {
+        if (lo >= hi) {
+            return true;
+        }
+        while (lo < hi) {
+            if (chars[lo++] != chars[hi--]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private String getSubstring(int lo, int hi) {
+        if (substrCache[lo][hi] != null) {
+            return substrCache[lo][hi];
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = lo; i < hi; i++) {
+            sb.append(chars[i]);
+        }
+        return sb.toString();
+    }
+}

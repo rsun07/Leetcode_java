@@ -1,0 +1,20 @@
+// 我记得在2020年初刷题的时候，因为刚刷完DFS，BFS，用DFS做这一题，超时。不过确实可以做。具体可以看总结，有写贪心算法和DP的区别
+// 这一题用backtrack也是可以做的，其实backtrack跟DFS也有一些相似
+
+// 贪心算法非常容易做
+class Solution {
+    public boolean canJump(int[] nums) {
+        if (nums == null || nums.length < 2) {
+            return true;
+        }
+        int maxIndex = 0, target = nums.length - 1;
+        for (int i = 0; i <= target && maxIndex >= i; i++) {
+            maxIndex = Math.max(maxIndex, i + nums[i]);
+            if (maxIndex >= target) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+

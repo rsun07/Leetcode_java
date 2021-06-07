@@ -1,0 +1,232 @@
+// 一道 Substring的题目，substring的题目很多都可以用两个指针做，这道题相对复杂一些。这道题目之所以不好用双指针，因为，并不是substring越长就一定符合要求。比如有的题目，找最短的substring，把整个string放下去，肯定符合要求。那么就先跑hi 指针，符合要求以后，跑lo指针，跑到不符合位置。如此反复。这道题是找最长而不是最短，而且整个string放下去，不一定符合要求。所以不是传统意义上的双指针滑动窗口解法。
+
+// 解法1：拆分法
+// 给定一个string或者string的substring，如何判断它是否qualify呢？就是里面所有char的count都大于k。如果有一个char的count不大于k，则任何包括这个char的substring都不可能qualify。那么就要把改输入的string或substring在不qualify的char这边拆成两半，前后各一半，继续做上面的判断。
+
+
+// 首先给出我2020年年初的解法。当时是28个test case，0ms. 31 test case, 2ms
+class Solution {
+    public int longestSubstring(String s, int k) {
+        if (s == null || s.length() == 0) return 0;
+        return longestSubstring(s, 0, s.length()-1, k);
+    }
+    
+    private int longestSubstring(String s, int start, int end, int k) {
+        if (start > end) return 0;
+        int[] count = new int [26];
+        for (int i = start; i <= end; i++)
+            count[s.charAt(i)-'a']++;
+        
+        List<Integer> noQualifyIndexes = new ArrayList<>();
+        for (int i = start; i <= end; i++) {
+            char c = s.charAt(i);
+            if (count[c-'a'] < k)
+                noQualifyIndexes.add(i);
+        }
+        if (noQualifyIndexes.size() == 0)
+            return end-start+1;
+        
+        int maxLen = longestSubstring(s, start, noQualifyIndexes.get(0)-1, k);
+        int preIndex = noQualifyIndexes.get(0);
+        for (int i = 1; i < noQualifyIndexes.size(); i++) {
+            maxLen = Math.max(maxLen, longestSubstring(s, preIndex+1, noQualifyIndexes.get(i)-1, k));
+            preIndex = noQualifyIndexes.get(i);
+        }
+        return Math.max(maxLen, longestSubstring(s, preIndex+1, end, k));
+    }
+}
+
+
+// 这是2021年年初的解法，31个test case，2ms。跟上面的几乎一样。
+class Solution {
+    public int longestSubstring(String s, int k) {
+        if (s == null || s.length() == 0) return 0;
+        return longestSubstring(s, 0, s.length()-1, k);
+    }
+    
+    private int longestSubstring(String s, int start, int end, int k) {
+        if (start > end) return 0;
+        int[] count = new int [26];
+        for (int i = start; i <= end; i++)
+            count[s.charAt(i)-'a']++;
+        
+        List<Integer> noQualifyIndexes = new ArrayList<>();
+        for (int i = start; i <= end; i++) {
+            char c = s.charAt(i);
+            if (count[c-'a'] < k)
+                noQualifyIndexes.add(i);
+        }
+        if (noQualifyIndexes.size() == 0)
+            return end-start+1;
+        
+        int maxLen = longestSubstring(s, start, noQualifyIndexes.get(0)-1, k);
+        int preIndex = noQualifyIndexes.get(0);
+        for (int i = 1; i < noQualifyIndexes.size(); i++) {
+            maxLen = Math.max(maxLen, longestSubstring(s, preIndex+1, noQualifyIndexes.get(i)-1, k));
+            preIndex = noQualifyIndexes.get(i);
+        }
+        return Math.max(maxLen, longestSubstring(s, preIndex+1, end, k));
+    }
+}
+
+// 受到2020年初解法的点播，我意识到，其实不需要sort，所以把2021年年初的解法优化成下面, 把run time 降低到1ms
+class Solution {
+    
+    private int maxLen;
+    public int longestSubstring(String s, int k) {
+        if (s == null) {
+            return 0;
+        }
+        this.maxLen = 0;
+        longestSubstring(s, 0, s.length()-1, k);
+        return maxLen;
+    }
+    
+    private void longestSubstring(String s, int lo, int hi, int k) {
+        if (lo > hi || hi - lo + 1 < k || hi - lo + 1 <= maxLen) {
+            return;
+        }
+        Map<Character, Integer> charToCount = new HashMap<>();
+        for (int i = lo; i <= hi; i++) {
+            char c = s.charAt(i);
+            charToCount.put(c, charToCount.getOrDefault(c, 0) + 1);
+        }
+        List<Integer> excludeIndexes = new ArrayList<>();
+        
+        // 还是有意义的，比如k = 2, 如果现在substring是, abcd...z，则这可以帮忙省略一些后面的操作
+        boolean hasQualifiedChar = false;
+        for (int i = lo; i <= hi; i++) {
+            if (charToCount.get(s.charAt(i)) < k) {
+                excludeIndexes.add(i);
+            } else {
+                hasQualifiedChar = true;
+            }
+        }
+        if (excludeIndexes.size() == 0) {
+            // the whole substring from lo to hi qualifies and we already checked earlier hi - lo + 1 > maxLen
+            maxLen = hi - lo + 1;
+            return;
+        }
+        if (hasQualifiedChar) {
+            longestSubstring(s, lo, excludeIndexes.get(0) - 1, k);
+            for (int i = 0; i < excludeIndexes.size() - 1; i++) {
+                longestSubstring(s, excludeIndexes.get(i) + 1, excludeIndexes.get(i+1) - 1, k);
+            }
+            longestSubstring(s, excludeIndexes.get(excludeIndexes.size() - 1) + 1, hi, k);
+        }
+    }
+}
+
+
+// 解法2： 双指针
+// 很难解释为什么这种解法可行，或者说，为什么要这样循环，当返回的substring里有1个char，2个char，3个char这样。而不是直接循环整个string，双指针。不过循环整个String好像没办法双指针，但是用下面的解法却可以得到结果。所以这个解法，我也不知道如何想到的，如何跟面试官解释为什么可行。
+
+// 我理解为什么可行了。解决双指针滑动窗口的题目，关键在于，解决什么时候扩张，什么时候收缩，什么时候窗口内的substring符合条件可以录入结果。
+// 这一题的滑动窗口，其实跟上面的类似，碰到不符合要求的char，就跳过，让lo等于hi+1，重头开始算。关键在乎什么情况下才符合要求？窗口内的所有char的count都要超过k。每一个都要超过。这题很容易错，我下面就贡献了一个错误的解法。
+
+class Solution {
+    public int longestSubstring(String s, int k) {
+        if (s == null || s.length() == 0) return 0;
+        int maxLen = 0;
+        // i -> numOfUniqueCharTarget
+        for (int i = 1; i <= 26; i++)
+            maxLen = Math.max(maxLen, longestSubstring(s, k, i));
+        return maxLen;
+    }
+    
+    private int longestSubstring(String s, int k, int numOfUniqueCharTarget) {
+        int maxLen = 0, lo = 0, hi = 0;
+        int numOfUniqueChar = 0;
+        int numOfCharAppearK = 0;
+        int[] count = new int[26];
+        while (hi < s.length()) {
+            char c = s.charAt(hi);
+            if (count[c-'a'] == 0)
+                numOfUniqueChar++;
+            count[c-'a']++;
+            if (count[c-'a'] == k)
+                numOfCharAppearK++;
+            hi++;
+            
+            while(numOfUniqueChar > numOfUniqueCharTarget) {
+                char cLo = s.charAt(lo);
+                if (count[cLo-'a'] == k)
+                    numOfCharAppearK--;
+                count[cLo-'a']--;
+                if (count[cLo-'a'] == 0)
+                    numOfUniqueChar--;
+                lo++;
+            }
+            
+            if (numOfUniqueChar == numOfUniqueCharTarget && numOfCharAppearK == numOfUniqueChar)
+                // don't need hi-lo+1 because already do hi++
+                maxLen = Math.max(maxLen, hi-lo);
+        }
+        return maxLen;
+    }
+}
+
+
+// 错误的解法。反例"ababacb"， k=3。 这个解法会误认为 ababa是符合条件的。
+class Solution {
+    public int longestSubstring(String s, int k) {
+        if (s == null || s.length() == 0) return 0;
+        char[] chars = s.toCharArray();
+        int[] count = new int[26];
+        for (char c : chars) {
+            count[c-'a']++;
+        }
+        
+        int lo, hi, maxLen = 0;
+        for (lo = 0, hi = 0; hi < chars.length; hi++) {
+            char c = chars[hi];
+            if (count[c-'a'] < k) {
+                // not hi-lo+1, because the current char at hi is not qualified
+                maxLen = Math.max(maxLen, hi-lo);
+                lo = hi+1;
+            }
+        }
+        // previous checking condition is when char at hi reach non-qualified char, need to check again here for the last part
+        maxLen = Math.max(maxLen, hi-lo);
+        return maxLen;
+    }
+}
+
+// 也是错的，例子"bbaaacbd"
+class Solution {
+    public int longestSubstring(String s, int k) {
+        if (s == null || s.length() == 0) return 0;
+        char[] chars = s.toCharArray();
+        int[] counts = new int[26], localCounts = new int[26];
+        for (char c : chars) {
+            counts[c-'a']++;
+        }
+        
+        int lo, hi, maxLen = 0;
+        for (lo = 0, hi = 0; hi < chars.length; hi++) {
+            char c = chars[hi];
+            if (counts[c-'a'] < k) {
+                // not hi-lo+1, because the current char at hi is not qualified
+                if (isQualified(localCounts, k)) {
+                    maxLen = Math.max(maxLen, hi-lo);
+                }
+                lo = hi+1;
+                localCounts = new int[26];
+            } else {
+                localCounts[c-'a']++;
+            }
+        }
+        // previous checking condition is when char at hi reach non-qualified char, need to check again here for the last part
+        if (isQualified(localCounts, k)) {
+            maxLen = Math.max(maxLen, hi-lo);
+        }
+        return maxLen;
+    }
+    
+    private boolean isQualified(int[] counts, int k) {
+        for (int count : counts) {
+            if (count > 0 && count < k) return false;
+        }
+        return true;
+    }
+}

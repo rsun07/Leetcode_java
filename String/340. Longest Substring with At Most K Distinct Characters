@@ -1,0 +1,124 @@
+// 比较容易想到的substring双指针方法。
+
+class Solution {
+    public int lengthOfLongestSubstringKDistinct(String s, int k) {
+        if (k == 0) return 0;
+        int maxLen = 0;
+        Map<Character, Integer> charToCount = new HashMap<>();
+        int lo, hi;
+        for (lo = 0, hi = 0; hi < s.length(); hi++) {
+            char c = s.charAt(hi);
+            if (!charToCount.containsKey(c) && charToCount.size() == k) {
+                while (charToCount.size() >= k) {
+                    char charToRemove = s.charAt(lo++);
+                    int count = charToCount.get(charToRemove);
+                    if (count == 1) charToCount.remove(charToRemove);
+                    else charToCount.put(charToRemove, count - 1);
+                }
+            }
+            charToCount.put(c, charToCount.getOrDefault(c, 0) + 1);
+            maxLen = Math.max(maxLen, hi - lo + 1);
+        }
+        return maxLen;
+    }
+}
+
+// 这一题更有意义研究的是学习LinkedHashMap的用法 注意一下的code
+
+/*
+        Map<Integer, Integer> map = new LinkedHashMap<>();
+        map.put(1, 1);
+        map.put(3, 3);
+        map.put(4, 4);
+        map.put(5, 5);
+        map.put(4, 44);
+        map.put(3, 33);
+
+        输出结果{1=1, 2=2, 3=33, 4=44, 5=5}，仍然会保留插入的顺序，不会因为后面有update就改变顺序。如果需要把3放到5后面，则需要remove掉3，然后再put
+*/
+
+// 多提一句，如何实现LinkedHashMap？删除要O(1)，插入要O(1), 要有顺序。有顺序只有List这一种数据结构，ArrayList或者LinkedList。ArrayList无法保持顺序还要做到删除O(1), 所以只能双向链表加HashMap
+
+// 回到这道题，我们用LinkedHashMap。当遇到一个新的char，而且此时substring candidate的size已经等于k的时候，就需要按照上面的逻辑，把其中一个char彻底从substring candidate里面移除，也就是把lo指针右移。如何知道哪一个char是我们需要移除的呢? 也就是该char的最后一个出现的index在最左边的时候。
+// 这里有一个容易错的点，就是不一定是删除第一个遇到的char，k=3的情况下，abbbaaac, 这时候不是移除第一个遇到的a，而是按照上面的逻辑，最后一个index最小的，也就是b，然后我们应该存下b对应的index 3， 把lo移动到4，即可。
+
+class Solution {
+    public int lengthOfLongestSubstringKDistinct(String s, int k) {
+        if (k == 0) return 0;
+        int maxLen = 0;
+        Map<Character, Integer> charToLastIndex = new HashMap<>();
+        LinkedList<Character> queue = new LinkedList<>();
+        int lo, hi;
+        for (lo = 0, hi = 0; hi < s.length(); hi++) {
+            char c = s.charAt(hi);
+            if (charToLastIndex.containsKey(c)) {
+                // 这里char primitive type的话，容易被认为是index。LinkedList的remove有两个重构的方法，一个是传index，一个是Object
+                queue.remove((Character) c);
+            } else if (charToLastIndex.size() == k) {
+                char charToRemove = queue.poll();
+                lo = charToLastIndex.get(charToRemove) + 1;
+                charToLastIndex.remove(charToRemove);
+            }
+            queue.offer(c);
+            charToLastIndex.put(c, hi);
+            maxLen = Math.max(maxLen, hi - lo + 1);
+        }
+        return maxLen;
+    }
+}
+
+// 直接用LinkedHashMap
+class Solution {
+    public int lengthOfLongestSubstringKDistinct(String s, int k) {
+        if (k == 0) return 0;
+        int maxLen = 0;
+        LinkedHashMap<Character, Integer> charToLastIndex = new LinkedHashMap<>();
+        for (int lo = 0, hi = 0; hi < s.length(); hi++) {
+            char c = s.charAt(hi);
+            if (charToLastIndex.containsKey(c)) {
+                charToLastIndex.remove(c);
+            } else if (charToLastIndex.size() == k) {
+                Map.Entry<Character, Integer> firstEntry = charToLastIndex.entrySet().iterator().next();
+                lo = firstEntry.getValue() + 1;
+                // LinkedHashMap remove is to remove(Object o), not index
+                charToLastIndex.remove(firstEntry.getKey());
+            }
+            charToLastIndex.put(c, hi);
+            maxLen = Math.max(maxLen, hi - lo + 1);
+        }
+        return maxLen;
+    }
+}
+
+// 第一种解法的变体，有一些细节需要注意。
+class Solution {
+    public int lengthOfLongestSubstringKDistinct(String s, int k) {
+        if (k == 0) return 0;
+        Map<Character, Integer> charToCount = new HashMap<>();
+        int lo = 0, hi = 0, maxLen = 0;
+        while (hi < s.length()) {
+            while (hi < s.length() && moveOn(s, k, hi, charToCount)) {
+                hi++;
+            }
+            maxLen = Math.max(maxLen, hi - lo);
+            if (hi >= s.length()) break;
+            while (charToCount.size() >= k) {
+                char c = s.charAt(lo++);
+                int count = charToCount.get(c);
+                if (count == 1) charToCount.remove(c);
+                else charToCount.put(c, count-1);
+            }
+        }
+        return maxLen;
+    }
+    
+    private boolean moveOn(String s, int k, int i, Map<Character, Integer> charToCount) {
+        char c = s.charAt(i);
+        if (charToCount.size() < k || charToCount.containsKey(c)) {
+            int count = charToCount.getOrDefault(c, 0) + 1;
+            charToCount.put(c, count);
+            return true;
+        }
+        return false;
+    }
+}

@@ -1,0 +1,110 @@
+// 一开始看错了题目，以为前后都可以加。写下了如下的解。
+class Solution {
+    public String shortestPalindrome(String s) {
+        if (s == null || s.length() < 2) {
+            return s;
+        }
+        int n = s.length();
+        for (int len = n; len > 0; len--) {
+            // 每个长度 试两个，一个是从0开始，一个是从最后一个开始。
+            if (isPalindrome(s, 0, len-1)) {
+                return fillFront(s, len);
+            }
+            if (isPalindrome(s, n-len, n-1)) {
+                return fillBack(s, n-len);
+            }
+        }
+        throw new AssertionError("should return before");
+    }
+    
+    private boolean isPalindrome(String s, int lo, int hi) {
+        while (lo < hi) {
+            if (s.charAt(lo++) != s.charAt(hi--)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private String fillFront(String s, int i) {
+        StringBuilder sb = new StringBuilder();
+        for (int j = i; j < s.length(); j++) {
+            sb.append(s.charAt(j));
+        }
+        sb.reverse();
+        sb.append(s);
+        return sb.toString();
+    }
+    
+    private String fillBack(String s, int i) {
+        StringBuilder sb = new StringBuilder();
+        for (int j = 0; j < i; j++) {
+            sb.append(s.charAt(j));
+        }
+        sb.reverse();
+        return s + sb.toString();
+    }
+}
+
+
+
+// 题目是说只能在前面加，那么就删掉后面加的逻辑就行了。不过会超时。
+class Solution {
+    public String shortestPalindrome(String s) {
+        if (s == null || s.length() < 2) {
+            return s;
+        }
+        int n = s.length();
+        for (int len = n; len > 0; len--) {
+            if (isPalindrome(s, 0, len-1)) {
+                return fillFront(s, len);
+            }
+        }
+        throw new AssertionError("should return before");
+    }
+    
+    private boolean isPalindrome(String s, int lo, int hi) {
+        while (lo < hi) {
+            if (s.charAt(lo++) != s.charAt(hi--)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private String fillFront(String s, int i) {
+        StringBuilder sb = new StringBuilder();
+        for (int j = i; j < s.length(); j++) {
+            sb.append(s.charAt(j));
+        }
+        sb.reverse();
+        sb.append(s);
+        return sb.toString();
+    }
+}
+
+// 更精简的模式。 来自 Cspiration官方频道：Leetcode中代码超时：因为s.charAt()慢，把String用toCharArray 转换为字符串数组就可以。原因是toCharArray 用的是System.arraycopy 更快。我个人感觉是LC有问题，因为两者没有什么区别，面试时写视频代码没有任何问题。
+class Solution {
+    public String shortestPalindrome(String s) {
+        if (s == null || s.length() < 2) {
+            return s;
+        }
+        // 这里要特别注意end和hi的区别。hi是指针，end是固定在那边不动的candidate。
+        int lo = 0, end = s.length() - 1, hi = end;
+        while (lo < hi) {
+            if (s.charAt(lo) == s.charAt(hi)) {
+                lo++;
+                hi--;
+            } else {
+                // lo回归到0，hi减少一个
+                lo = 0;
+                end--;
+                hi = end;
+            }
+        }
+        return new StringBuilder(s.substring(end+1)).reverse() + s;
+    }
+}
+
+
+// 还有一种就是KMP解法了，这个我就不会了，日后可以学一下。

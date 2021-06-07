@@ -1,0 +1,46 @@
+// 易错题。
+
+// 下面的情况，就会返回错误的结果，当test case是[5,1,2,3]或者[2,1] 这类的时候
+class Solution {
+    public int findMin(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+        int lo = 0, hi = nums.length - 1;
+        while (lo <= hi) {
+            int mid = lo + (hi-lo)/2;
+            if (nums[mid] >= nums[0]) {
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return nums[lo];
+    }
+}
+
+// 我一开始是想，当nums[mid] 比前面的小，比后面的大的时候，这个就是最小的。但是这个逻辑太难写了。因为考虑到mid有可能是0或者最后一个。
+// 实际上，只要当 nums[lo] <= nums[hi] 成立的时候，lo就是最小的一个了。这是解本题的关键。nums[mid] >= nums[0]和hi = mid也是两个易错点，需要仔细斟酌。最好是带入详细的例子来。
+
+class Solution {
+    public int findMin(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+        int lo = 0, hi = nums.length - 1;
+        while (lo <= hi) {
+            if (nums[lo] <= nums[hi]) {
+                return nums[lo];
+            }
+            int mid = lo + (hi-lo)/2;
+            // 经过前一个if判断，这里可以肯定，结果不是lo，所以当mid等于lo的时候，往后移动
+            if (nums[mid] >= nums[0]) {
+                lo = mid + 1;
+            } else {
+                // 为什么不能mid-1? 因为这样可能会错过最小值，最小值本身也小于nums[0]
+                hi = mid;
+            }
+        }
+        return nums[lo];
+    }
+}

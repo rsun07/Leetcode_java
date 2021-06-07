@@ -1,0 +1,172 @@
+/*
+92. 背包问题
+
+在n个物品中挑选若干物品装入背包，最多能装多满？假设背包的大小为m，每个物品的大小为A[i]
+
+样例
+样例 1:
+	输入:  [3,4,8,5], backpack size=10
+	输出:  9
+
+样例 2:
+	输入:  [2,3,5,7], backpack size=12
+	输出:  12
+	
+挑战
+O(n x m) 的时间复杂度 and O(m) 空间复杂度
+如果不知道如何优化空间O(n x m) 的空间复杂度也可以通过.
+
+注意事项
+你不可以将物品进行切割。
+*/
+
+
+// 特别注意，里面的for循环一定要从m到0，不能从0到m。否则就等于有重复取。
+// 思路是这样，一个一个物品尝试着往里面放，每一个物品都有两种放法，放进去和不放进去。
+public class Solution {
+    /**
+     * @param m: An integer m denotes the size of a backpack
+     * @param A: Given n items with size A[i]
+     * @return: The maximum size
+     */
+    public int backPack(int m, int[] A) {
+        int[][] dp = new int[A.length+1][m+1];
+        // 这里循环从1开始，是故意放空了第0行，i代表现在有几个物品。A[i-1]代表当前物品。
+        for (int i = 1; i <= A.length; i++) {
+            for (int j = m; j > 0; j--) {
+                if (A[i-1] <= j) {
+                    dp[i][j] = Math.max(dp[i-1][j], dp[i-1][j-A[i-1]] + A[i-1]);
+                } else {
+                    dp[i][j] = dp[i-1][j];
+                }
+            }
+        }
+        return dp[A.length][m];
+    }
+}
+
+// 空间优化后, 第二个for循环也可以优化一下终止条件。
+public class Solution {
+    /**
+     * @param m: An integer m denotes the size of a backpack
+     * @param A: Given n items with size A[i]
+     * @return: The maximum size
+     */
+    public int backPack(int m, int[] A) {
+        int[] dp = new int[m+1];
+        for (int i = 1; i <= A.length; i++) {
+            for (int j = m; j >= A[i-1]; j--) {
+                dp[j] = Math.max(dp[j], dp[j-A[i-1]] + A[i-1]);
+            }
+        }
+        return dp[m];
+    }
+}
+
+// 如果是背包问题II，即加了value V[] 数组进来，只需要简单的改一行即可，如下
+public class Solution {
+    /**
+     * @param m: An integer m denotes the size of a backpack
+     * @param A: Given n items with size A[i]
+     * @param V: Given n items with value V[i]
+     * @return: The maximum value
+     */
+    public int backPackII(int m, int[] A, int[] V) {
+        // dp的意义变了，上面是size最大，现在是value最大。
+        int[] dp = new int[m+1];
+        for (int i = 1; i <= A.length; i++) {
+            for (int j = m; j >= A[i-1]; j--) {
+                dp[j] = Math.max(dp[j], dp[j-A[i-1]] + V[i-1]);
+            }
+        }
+        return dp[m];
+    }
+}
+
+// 用两行数组来做，就是这样的效果，方便理解
+    public int backPackII(int m, int[] A, int[] V) {
+        int[] pre = new int[m+1];
+        for (int i = 1; i <= A.length; i++) {
+            int[] cur = new int[m+1];
+            for (int j = m; j > 0; j--) {
+                if (A[i-1] <= j) {
+                    cur[j] = Math.max(pre[j], pre[j-A[i-1]] + V[i-1]);
+                } else {
+                    cur[j] = pre[j];
+                }
+            }
+            pre = cur;
+        }
+        return pre[m];
+    }
+
+    public int backPackII(int m, int[] A, int[] V) {
+        int[] pre = new int[m+1];
+        for (int i = 1; i <= A.length; i++) {
+            int[] cur = new int[m+1];
+            // 这时候，j从小到大写，也是没有任何问题的，印证了我的推测。第一种解法之所以要从大到小写，是因为pre 和 cur共用同一个数组，这虽然是节约空间的写法，但是却更多讲究容易出错。所以还是先从二维数组开始写，然后改成两个一维数组，最后再想一个一维数组的。
+            for (int j = 1; j <= m; j++) {
+                if (A[i-1] <= j) {
+                    cur[j] = Math.max(pre[j], pre[j-A[i-1]] + V[i-1]);
+                } else {
+                    cur[j] = pre[j];
+                }
+            }
+            pre = cur;
+        }
+        return pre[m];
+    }
+
+
+// 背包问题III，可以无限取。则也是改一行。把里面的循环从小到大走即可。
+// 这里要问，为什么循环由大到小，就是每个物品只取一次，循环有小到大，就是无限取。
+// 其实这里的一维DP是取巧了，如果写成pre cur两个数组或者写成二维dp，就很明显能看出来。从大到小的循环，是跟上一行的相比，只取一次。从小到大的循环，是跟本行之前的值相比，本行之前的值，可能已经存放过当前的item了。
+public class Solution {
+    /**
+     * @param A: an integer array
+     * @param V: an integer array
+     * @param m: An integer
+     * @return: an array
+     */
+    public int backPackIII(int[] A, int[] V, int m) {
+        int[] dp = new int[m+1];
+        for (int i = 1; i <= A.length; i++) {
+            for (int j = A[i-1]; j <= m; j++) {
+                dp[j] = Math.max(dp[j], dp[j-A[i-1]] + V[i-1]);
+            }
+        }
+        return dp[m];
+    }
+}
+
+// 写成两个一位数组的时候，是这样写。注意跟上面只能取一次的比较。
+    public int backPackIII(int[] A, int[] V, int m) {
+        int[] pre = new int[m+1];
+        for (int i = 1; i <= A.length; i++) {
+            int[] cur = new int[m+1];
+            for (int j = 1; j <= m; j++) {
+                if (A[i-1] <= j) {
+                    cur[j] = Math.max(pre[j], cur[j-A[i-1]] + V[i-1]);
+                } else {
+                    cur[j] = pre[j];
+                }
+            }
+            pre = cur;
+        }
+        return pre[m];
+    }
+
+
+// 还有一种多重背包问题，就是每一个东西的量是N[i]. 这个就更难了，一般不会考。要写的话，其实就是0-1背包问题的特例。还是需要从右往左走，0-1背包问题是只考虑加一个，而这里要考虑加1个，2个，3个，直到counts[k]个
+    public int backPackMulti(int[] weights, int[] values, int[] counts, int m) {
+        int[] dp = new int[m+1];
+        for (int i = 1; i <= weights.length; i++) {
+            for (int j = m; j >= weights[i-1]; j--) {
+                int value = values[i-1], weight = weights[i-1];
+                for (int k = 1; k <= counts[i] && weight <= j; k++, weight += weights[i-1], value += values[i-1]) {
+                    dp[j] = Math.max(dp[j], dp[j-weight] + value);
+                }
+            }
+        }
+        return dp[m];
+    }

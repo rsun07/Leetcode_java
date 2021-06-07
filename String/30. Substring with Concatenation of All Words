@@ -1,0 +1,91 @@
+// 非常难的题目，碰到不要想什么优化，就像下面这样，干就是了。
+class Solution {
+    public List<Integer> findSubstring(String s, String[] words) {
+        List<Integer> output = new ArrayList<>();
+        if (s == null || words == null || s.length() == 0 || words.length == 0) {
+            return output;
+        }
+        int N = s.length(), wordLen = words[0].length(), wordsCount = 0;
+        // word always with the same length, so only care the start point
+        String[] wordCache = new String[N+1];
+        Map<String, Integer> wordToCount = new HashMap<>();
+        for (String word : words) {
+            wordToCount.put(word, wordToCount.getOrDefault(word, 0) + 1);
+            wordsCount++;
+        }
+        int substringLen = wordLen * wordsCount;
+        for (int i = 0; i < N - substringLen + 1; i++) {
+            Map<String, Integer> substrWordToCount = new HashMap<>();
+            int j = i;
+            for (; j < i + substringLen; j += wordLen) {
+                String word;
+                if (wordCache[j] == null) {
+                    word = s.substring(j, j+wordLen);
+                    wordCache[j] = word;
+                } else {
+                    word = wordCache[j];
+                }
+                int substrWordCount = substrWordToCount.getOrDefault(word, 0);
+                if (!wordToCount.containsKey(word) ||  substrWordCount >= wordToCount.get(word)) {
+                    break;
+                } 
+                substrWordToCount.put(word, substrWordCount + 1);
+            }
+            if (j == i + substringLen) {
+                output.add(i);
+            }
+        }
+        return output;
+    }
+}
+
+// 优化，上面120ms，下面只需要7ms。比我快的只能的用tries的做法。用sliding window做，避免重复的计算。
+class Solution {
+    public List<Integer> findSubstring(String s, String[] words) {
+        List<Integer> output = new ArrayList<>();
+        if (s == null || words == null || s.length() == 0 || words.length == 0) {
+            return output;
+        }
+        int wordLen = words[0].length(), wordsCount = 0;
+        Map<String, Integer> wordToCount = new HashMap<>();
+        for (String word : words) {
+            wordToCount.put(word, wordToCount.getOrDefault(word, 0) + 1);
+            wordsCount++;
+        }
+        int substringLen = wordLen * wordsCount;
+        
+        // wordLen = N, there are N ways to start the search. e.g., if N = 4, search from 0, 1, 2 and 3. Starting from index 4 will fall into the sliding window search that starts from 0.
+        for (int start = 0; start < wordLen; start++) {
+            Queue<String> queue = new LinkedList<>();
+            Map<String, Integer> substrWordToCount = new HashMap<>();
+            for (int lo = start, hi = start; hi <= s.length() - wordLen; hi += wordLen) {
+                String word = s.substring(hi, hi + wordLen);
+                if (!wordToCount.containsKey(word)) {
+                    queue = new LinkedList<>();
+                    lo = hi + wordLen;
+                    substrWordToCount = new HashMap<>();
+                } else {
+                    int substrWordCount = substrWordToCount.getOrDefault(word, 0);
+                    if (substrWordCount >= wordToCount.get(word)) {
+                        while (!queue.peek().equals(word)) {
+                            String wordToRemove = queue.poll();
+                            int count = substrWordToCount.get(wordToRemove);
+                            if (count == 1) substrWordToCount.remove(wordToRemove);
+                            else substrWordToCount.put(wordToRemove, count - 1);
+                            lo += wordLen;
+                        }
+                        lo += wordLen;
+                        queue.poll();
+                    } else {
+                        substrWordToCount.put(word, substrWordCount + 1);
+                    }
+                    queue.offer(word);
+                    if (queue.size() == wordsCount) {
+                        output.add(lo);
+                    }
+                }
+            }
+        }
+        return output;
+    }
+}

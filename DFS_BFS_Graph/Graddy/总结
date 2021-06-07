@@ -1,0 +1,15 @@
+greedy 贪心算法，有人说是DP动态规划的特例，我觉得有时候也是DFS的特例。就是说每一步是最优解可以构成一个全局解的时候，就可以用贪心算法。而动态规划则是，每一步的最优解，不一定是全局的最优解。
+
+我的理解，比如house robber那道题，如果是两排房子，每一排只能偷一个房子，仅此而已。那么就可以用贪心算法，偷每一排两个房子中价值更高的那一个。
+1，3，5，3，2
+2，5，4，3，3
+偷2，5，5，3，3. 这就是贪心算法。
+如果有限制，不能偷相邻的房子，则就是DP动态规划，因为每一步的local最优解不一定是全局的最优解，要根据前后房子的值来做取舍。
+以上是我简单的理解。
+
+回到这个jump game的经典题目，类似的，因为限制很少，所以基本就是贪心算法。如果规定每次最少跳2格，其实也就类似上面相邻的房子不能偷，可能就会进化成DP问题
+
+
+Backtracking is a more general purpose algorithm.
+
+Depth-First search is a specific form of backtracking related to searching tree structures. From

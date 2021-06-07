@@ -1,0 +1,119 @@
+// 很经典的一个问题，如果用stack，或者说用递归的办法遍历一棵树，比如inorder，那么最半边子树会被先遍历。
+// 具体来说，比如tree有5层，那么左半边的2，3，4，5层都会比右半边的第二层先reach到。这就会出问题，当你遍历左半边的第三层需要右半边第三层的信息的时候，因为右半边还没有被遍历，所以会被忽略，会造成结果的缺失。
+// 这种情况下，只有用level order才能避免这个错误。
+
+// 纠正错误后自己的写法，很复杂。
+// 复杂的点在于，没有用dummy，所以next level的root需要做三次判断给与赋值。另一点是，我是用parent的指针，来做root.left -> root.right -> next
+// 下一种解法，是用一个指针，head.next = left, head.next = right. 体会一下，第一人称变了，问题也变得更简单了。
+/*
+// Definition for a Node.
+class Node {
+    public int val;
+    public Node left;
+    public Node right;
+    public Node next;
+
+    public Node() {}
+    
+    public Node(int _val) {
+        val = _val;
+    }
+
+    public Node(int _val, Node _left, Node _right, Node _next) {
+        val = _val;
+        left = _left;
+        right = _right;
+        next = _next;
+    }
+};
+*/
+
+class Solution {
+    public Node connect(Node root) {
+        Node originalRoot = root, nextHead = null;
+        while (root != null) {
+            if (root.left != null || root.right != null) {
+                Node nextParent = root.next, next = null;
+                while (nextParent != null && next == null) {
+                    if (nextParent.left != null) {
+                        next = nextParent.left;
+                    } else if (nextParent.right != null) {
+                        next = nextParent.right;
+                    } else {
+                        nextParent = nextParent.next;
+                    }
+                }
+
+                if (root.left != null && root.right != null) {
+                    if (nextHead == null) {
+                        nextHead = root.left;
+                    }
+                    root.left.next = root.right;
+                    root.right.next = next;
+                } else if (root.left != null) {
+                    if (nextHead == null) {
+                        nextHead = root.left;
+                    }
+                    root.left.next = next;
+                } else { // root.right != null
+                    if (nextHead == null) {
+                        nextHead = root.right;
+                    }
+                    root.right.next = next;
+                }
+            }
+            root = root.next;
+            if (root == null) {
+                root = nextHead;
+                nextHead = null;
+            }
+        }
+        return originalRoot;
+    }
+}
+
+// 应该先看下面一种，传统的Level order BFS的做法。然后再想到这里，这里既然已经有next指针，相当于已经build了一个linked list，每个level。
+class Solution {
+    public Node connect(Node root) {
+        if (root == null) return null;
+        Node head = root;
+        while (head != null) {
+            Node childDummyHead = new Node(0), childHead = childDummyHead;
+            while (head != null) {
+                if (head.left != null) {
+                    childHead.next = head.left;
+                    childHead = childHead.next;
+                }
+                if (head.right != null) {
+                    childHead.next = head.right;
+                    childHead = childHead.next;
+                }
+                // 注意，不要想当然，把上面两行看似重复的 childHead = childHead.next; 拉出来放在这里。是不可以的，这两个不是if else的关系。
+                head = head.next;
+            }
+            head = childDummyHead.next;
+        }
+        return root;
+    }
+}
+
+// 更加传统的 Level Order traversal解法。但是需要extra O(N) 的空间存Queue。上面那个则不用，上面的是O(1) 的space。
+class Solution {
+    public Node connect(Node root) {
+        if (root == null) return null;
+        Queue<Node> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            int levelSize = queue.size();
+            Node pre = null;
+            for (int i = 0; i < levelSize; i++) {
+                Node node = queue.poll();
+                if (pre != null) pre.next = node;
+                if (node.left != null) queue.offer(node.left);
+                if (node.right != null) queue.offer(node.right);
+                pre = node;
+            }
+        }
+        return root;
+    }
+}

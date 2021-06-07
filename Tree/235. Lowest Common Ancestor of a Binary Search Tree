@@ -1,0 +1,52 @@
+// 这一题，跟 236. Lowest Common Ancestor of a Binary Tree 类似。特别要注意条件，题目说了p和q都在树里，而且tree里所有node都是unique的，这两点特别重要。
+
+// 通用的办法就是
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null || root == p || root == q) {
+            return root;
+        }
+        TreeNode left = lowestCommonAncestor(root.left, p, q);
+        TreeNode right = lowestCommonAncestor(root.right, p, q);
+        if (left != null && right != null) return root;
+        return left == null ? right : left;
+    }
+}
+
+// 用好BST的特性，可以用数值的大小来判断。LCA大于p小于q。 注意，LCA也可能等于其中一个，但是不能同时等于两个，不过题目说了p != q， 所以可以两边都用等于
+
+// 这个是保证p比q小的情况下，用比较。但是这样容易出问题，最好还是用if，else if，else这样的逻辑来判断。
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null) {
+            return null;
+        }
+        if (p.val > q.val) {
+            return lowestCommonAncestor(root, q, p);
+        }
+        if (root.val < p.val) {
+            return lowestCommonAncestor(root.right, p, q);
+        }
+        if (root.val > q.val) {
+            return lowestCommonAncestor(root.left, p, q);
+        }
+        return root;
+    }
+}
+
+// 下面的LC答案的解答。我为什么会用上面的方法，因为要判断root是否在p和q之间，很困难。尤其是在不知道p，q大小的前提下。但是，下面通过很巧妙的办法，把所有复杂的逻辑都放在else里面了。
+
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null) {
+            return null;
+        }
+        if (p.val > root.val && q.val > root.val) {
+            return lowestCommonAncestor(root.right, q, p);
+        } else if (p.val < root.val && q.val < root.val) {
+            return lowestCommonAncestor(root.left, p, q);
+        } else {
+            return root;
+        }
+    }
+}

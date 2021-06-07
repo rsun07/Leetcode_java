@@ -1,0 +1,54 @@
+// 付费题，典型的google题目，莫名其妙，让人摸不着头脑
+/*
+
+Given a binary tree, find the length of the longest consecutive sequence path.
+
+The path refers to any sequence of nodes from some starting node to any node in the tree along the parent-child connections. The longest consecutive path need to be from parent to child (cannot be the reverse).
+
+Example 1:
+
+Input:
+
+   1
+    \
+     3
+    / \
+   2   4
+        \
+         5
+
+Output: 3
+
+Explanation: Longest consecutive sequence path is 3-4-5, so return 3.
+Example 2:
+
+Input:
+
+   2
+    \
+     3
+    / 
+   2    
+  / 
+ 1
+
+Output: 2 
+
+Explanation: Longest consecutive sequence path is 2-3, not 3-2-1, so return 2.
+*/
+
+
+class Solution {
+    public int longestConsecutive(TreeNode root) {
+        if (root == null) return 0;
+        return help(root, root.val, 0);
+    }
+    
+    private int help(TreeNode root, int parentVal, int count) {
+        if (root == null) return count;
+        count = root.val == parentVal + 1 ? count+1 : 1;
+        int leftMax = help(root.left, root.val, count), rightMax = help(root.right, root.val, count);
+        // 易错点，不能只返回Math.max(leftMax, rightMax)。因为count在children的判断中有可能会被变成1，这样就丢掉了max count的值
+        return Math.max(count, Math.max(leftMax, rightMax));
+    }
+}

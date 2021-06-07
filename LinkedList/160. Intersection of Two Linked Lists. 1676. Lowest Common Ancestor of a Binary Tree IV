@@ -1,0 +1,98 @@
+// 1650. Lowest Common Ancestor of a Binary Tree III, 是付费题，但是其实是一样的，就是说树有parent的link，其实跟这题一样。
+
+// 存路径的做法
+public class Solution {
+    public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
+        Set<ListNode> path = new HashSet<>();
+        while (headA != null) {
+            path.add(headA);
+            headA = headA.next;
+        }
+        while (!path.contains(headB) && headB != null) {
+            headB = headB.next;
+        }
+        return headB;
+    }
+}
+
+// 两边都存，然后倒回去反推，这种做法肯定是不可取的，空间消耗大，时间消耗也可能更大，虽然复杂度是一样的。
+public class Solution {
+    public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
+        Stack<ListNode> stackA = new Stack<>();
+        Stack<ListNode> stackB = new Stack<>();
+        
+        while (headA != null) {
+            stackA.push(headA);
+            headA = headA.next;
+        }
+        
+        while (headB != null) {
+            stackB.push(headB);
+            headB = headB.next;
+        }
+        
+        ListNode intersectionNode = null;
+        while (!stackA.isEmpty() && !stackB.isEmpty()) {
+            ListNode nodeA = stackA.pop(), nodeB = stackB.pop();
+            if (nodeA != nodeB) return intersectionNode;
+            intersectionNode = nodeA;
+        }
+        return intersectionNode;
+    }
+}
+
+// 超级麻烦的做法，但是比较巧妙。先把A找到头尾，连起来形成环。那么LCA就是环的入口，用环找入口的方法，就可以找到
+public class Solution {
+    public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
+        if (headA == null || headB == null) return null;
+        ListNode nodeA = headA, tailA;
+        while (nodeA != null && nodeA.next != null) 
+            nodeA = nodeA.next;
+        tailA = nodeA;
+        nodeA.next = headA;
+        ListNode intersectionNode = loopDetector(headB);
+        tailA.next = null;
+        return intersectionNode;
+    }
+    
+    private ListNode loopDetector(ListNode head) {
+        ListNode faster = head, slower = head;
+        while (faster != null && faster.next != null) {
+            faster = faster.next.next;
+            slower = slower.next;
+            if (slower == faster) 
+                return findLoopStart(head, slower);
+        }
+        return null;
+    }
+    
+    private ListNode findLoopStart(ListNode head, ListNode node) {
+        while (head != node) {
+            head = head.next;
+            node = node.next;
+        }
+        return head;
+    }
+}
+
+// 办法跟环找入口有点类似。
+/*
+
+     1 -> 2 \
+             > 6 -> 7 -> 8
+3 -> 4 -> 5 /
+
+1,2 的长度为x，3，4，5的长度为y，6，7，8的长度为z。
+有 x + z + y = y + z + x。也就是本题的解法。从1开始，走到头以后，放到3这边重新开始走。3也是同理，走到头以后，放到1重新开始走，两者会相遇在6，就是答案。最多走两边，还是O(n) 复杂度，但是空间就是O(1)
+*/
+
+public class Solution {
+    public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
+        ListNode h1 = headA, h2 = headB;
+        while (h1 != h2) {
+            h1 = h1 == null ? headB : h1.next;
+            h2 = h2 == null ? headA : h2.next;
+        }
+        return h1;
+    }
+}

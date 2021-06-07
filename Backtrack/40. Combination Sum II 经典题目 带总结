@@ -1,0 +1,119 @@
+// 标准解法，递归里面套一个循环。
+// 记住，很多情况下，为了方便去重，都需要先排序sort一下
+// 为了避免重复，最后一行那个 do while 也是常规标准操作
+
+// 如果不需要获得枚举的所有结果，只需要一个count，很可能可以用DP来解题
+
+class Solution {
+    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+        List<List<Integer>> combinations = new ArrayList<>();
+        if (candidates == null || candidates.length == 0) return combinations;
+        Arrays.sort(candidates);
+        backtrack(0, candidates, target, new ArrayList<Integer>(), combinations);
+        return combinations;
+    }
+    
+    private void backtrack(int i, int[] candidates, int target, List<Integer> combination, List<List<Integer>> combinations) {
+        while (i < candidates.length) {
+            int newTarget = target - candidates[i];
+            if (newTarget < 0) return;
+            combination.add(candidates[i]);
+            if (newTarget == 0) {
+                combinations.add(new ArrayList<>(combination));
+                combination.remove(combination.size()-1);
+                return;
+            }
+            backtrack(i+1, candidates, newTarget, combination, combinations);
+            combination.remove(combination.size()-1);
+            do {i++;} while(i < candidates.length && candidates[i] == candidates[i-1]);
+        }
+    }
+}
+
+
+// 这里是有index的，跟这一题47. Permutations II，不一样。47题里面，可以用下面这样的方法来解题，因为47题里的backtrack是不传index的。为什么不传index？因为Permutation是有顺序的，[1,2]和[2,1]是不一样的。但是在本题里面，是无序的。[1,2]和[2,1]是一样的只能取其中一个。我们用来克服duplicate的方法就是，排序，然后每次只取比combination最后一个数值相等或者更大的数值。
+
+// 下面这个方法有错误，会错过[1,1,5], [2,2,3] 这样的解。避免的办法也很简单，要么用上面类似的do while结构，放到后面去。或者是另起一个j，保证j不能等于i。因为每次的j，都相当于是新的开始，刚开始的第一个是不能被漏过的。之后的，考虑到重复的问题，才应该被略过。
+
+class Solution {
+    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+        List<List<Integer>> combinations = new ArrayList<>();
+        if (candidates == null || candidates.length == 0) return combinations;
+        Arrays.sort(candidates);
+        backtrack(0, candidates, target, new ArrayList<Integer>(), combinations);
+        return combinations;
+    }
+    
+    private void backtrack(int i, int[] candidates, int target, List<Integer> combination, List<List<Integer>> combinations) {
+        if (target == 0) {
+            combinations.add(new ArrayList<>(combination));
+            return;
+        }
+        if (target < 0) {
+            return;
+        }
+        for (; i < candidates.length; i++) {
+            if (i > 0 && candidates[i] == candidates[i-1]) {
+                continue;
+            }
+            combination.add(candidates[i]);
+            backtrack(i+1, candidates, target - candidates[i], combination, combinations);
+            combination.remove(combination.size()-1);
+        }
+    }
+}
+
+// 正确的解法
+class Solution {
+    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+        List<List<Integer>> combinations = new ArrayList<>();
+        if (candidates == null || candidates.length == 0) return combinations;
+        Arrays.sort(candidates);
+        backtrack(0, candidates, target, new ArrayList<Integer>(), combinations);
+        return combinations;
+    }
+    
+    private void backtrack(int i, int[] candidates, int target, List<Integer> combination, List<List<Integer>> combinations) {
+        if (target == 0) {
+            combinations.add(new ArrayList<>(combination));
+            return;
+        }
+        if (target < 0) {
+            return;
+        }
+        for (int j = i; j < candidates.length; j++) {
+            if (j > 0 && j != i && candidates[j] == candidates[j-1]) {
+                continue;
+            }
+            combination.add(candidates[j]);
+            backtrack(j+1, candidates, target - candidates[j], combination, combinations);
+            combination.remove(combination.size()-1);
+        }
+    }
+}
+
+// 稍作优化，提前结束一些循环。
+class Solution {
+    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+        List<List<Integer>> combinations = new ArrayList<>();
+        if (candidates == null || candidates.length == 0) return combinations;
+        Arrays.sort(candidates);
+        backtrack(0, candidates, target, new ArrayList<Integer>(), combinations);
+        return combinations;
+    }
+    
+    private void backtrack(int i, int[] candidates, int target, List<Integer> combination, List<List<Integer>> combinations) {
+        if (target == 0) {
+            combinations.add(new ArrayList<>(combination));
+            return;
+        }
+        for (int j = i; j < candidates.length && target - candidates[j] >= 0; j++) {
+            if (j > 0 && j != i && candidates[j] == candidates[j-1]) {
+                continue;
+            }
+            combination.add(candidates[j]);
+            backtrack(j+1, candidates, target - candidates[j], combination, combinations);
+            combination.remove(combination.size()-1);
+        }
+    }
+}

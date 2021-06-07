@@ -1,0 +1,186 @@
+// 一开始的想法是， 把String转化成int[]的形式，存下来每个char的count，看看是不是diff是1.后来发现这样不行，因为char的顺序也是要保留的。于是有了解法1，用dfs做，比较diff的方法是遍历wordList，然后比较两个String，看diff是不是刚好1.这样做会超时.
+// 还有一个易错点，要仔细看题目，有可能变换不成功的，要返回0，我一开始以为一定成功，虽然题目中我没找到一定成功的字眼，但是我想当然。
+// 想过用boolean[] 来存visited/path， 不过不可行，因为beginWord不再wordList里面
+
+/*
+"hit"
+"cog"
+["hot","dot","dog","lot","log","cog"]
+
+"qa"
+"sq"
+["si","go","se","cm","so","ph","mt","db","mb","sb","kr","ln","tm","le","av","sm","ar","ci","ca","br","ti","ba","to","ra","fa","yo","ow","sn","ya","cr","po","fe","ho","ma","re","or","rn","au","ur","rh","sr","tc","lt","lo","as","fr","nb","yb","if","pb","ge","th","pm","rb","sh","co","ga","li","ha","hz","no","bi","di","hi","qa","pi","os","uh","wm","an","me","mo","na","la","st","er","sc","ne","mn","mi","am","ex","pt","io","be","fm","ta","tb","ni","mr","pa","he","lr","sq","ye"]
+*/
+
+class Solution {
+    
+    private int minLen;
+        
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        // max is using all the words in wordList (endWord must included in wordList), so 1 + wordList.size()
+        this.minLen = wordList.size() + 2;
+        dfs(beginWord, endWord, wordList, new HashSet<String>());
+        return minLen > wordList.size() + 1 ? 0 : minLen;
+    }
+    
+    private void dfs(String word, String target, List<String> wordList, Set<String> path) {
+        if (word.equals(target)) {
+            minLen = Math.min(minLen, path.size() + 1);
+            return;
+        }
+        path.add(word);
+        for (String nextWord : wordList) {
+            if (!path.contains(nextWord) && isValidTransfer(word, nextWord)) {
+                dfs(nextWord, target, wordList, path);
+            }
+        }
+        path.remove(word);
+    }
+    
+    private boolean isValidTransfer(String w1, String w2) {
+        int diff = 0;
+        for (int i = 0; i < w1.length() && diff < 2; i++) {
+            if (w1.charAt(i) != w2.charAt(i)) {
+                diff++;
+            }
+        }
+        return diff == 1;
+    }
+}
+
+// 改进后还是超时，看来只能降维复杂度，光靠优化是不够的
+class Solution {
+    
+    private int minLen;
+        
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        wordList.add(beginWord);
+        boolean[] visited = new boolean[wordList.size()];
+        // set for beginWord
+        visited[wordList.size()-1] = true;
+        // max is using all the words in wordList (endWord must included in wordList), so 1 + wordList.size()
+        this.minLen = wordList.size() + 1;
+        dfs(beginWord, endWord, wordList, visited, 0);
+        return minLen > wordList.size() ? 0 : minLen;
+    }
+    
+    private void dfs(String word, String target, List<String> wordList, boolean[] visited, int count) {
+        if (word.equals(target)) {
+            minLen = Math.min(minLen, count + 1);
+            return;
+        }
+        // wordList.size()-1, always avoid the begin word
+        for (int i = 0; i < wordList.size() - 1; i++) {
+            String nextWord = wordList.get(i);
+            if (!visited[i] && isValidTransfer(word, nextWord)) {
+                visited[i] = true;
+                dfs(nextWord, target, wordList, visited, count + 1);
+                visited[i] = false;
+            }
+        }
+    }
+    
+    private boolean isValidTransfer(String w1, String w2) {
+        int diff = 0;
+        for (int i = 0; i < w1.length() && diff < 2; i++) {
+            if (w1.charAt(i) != w2.charAt(i)) {
+                diff++;
+            }
+        }
+        return diff == 1;
+    }
+}
+
+
+// 上面方法中，找nextWord的时间复杂度是 wordList.size() * wordLen. 以前刷题的时候，用的方法是把wordList放到一个Set里面，然后把现有的word，每一个char尝试着变成别的char，看新的word在不在set里面。这样做的时间复杂度是26 * wordLen. 其实不止，因为在寻找每一个char的变体的时候，还要把char array变成String，又是一个wordLen的复杂度，所以最终的复杂度是wordLen(遍历每一个char) * 26 (26种变换) * wordLen (每种变换要转换成String来比较)，最终等于26 * wordLen^2。当wordList的length 大于26 * wordLen的时候，这样做比上面的更快。超时的那个input，wordList的长度超过50。
+// 2021年1月，新的test case。也超时
+class Solution {
+    
+    private int minLen;
+        
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        // max is using all the words in wordList (endWord must included in wordList), so 1 + wordList.size()
+        this.minLen = wordList.size() + 2;
+        Set<String> wordSet = new HashSet<>();
+        for (String word : wordList) {
+            wordSet.add(word);
+        }
+        dfs(beginWord, endWord, wordSet, new HashSet<String>());
+        return minLen > wordList.size() + 1 ? 0 : minLen;
+    }
+    
+    private void dfs(String word, String target, Set<String> wordSet, Set<String> path) {
+        if (word.equals(target)) {
+            minLen = Math.min(minLen, path.size() + 1);
+            return;
+        }
+        path.add(word);
+        char[] chars = word.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char originChar = chars[i];
+            for (char c = 'a'; c <= 'z'; c++) {
+                if (c == originChar) {
+                    continue;
+                }
+                chars[i] = c;
+                String newWord = String.valueOf(chars);
+                if (!path.contains(newWord) && wordSet.contains(newWord)) {
+                    dfs(newWord, target, wordSet, path);
+                }
+            }
+            chars[i] = originChar;
+        }
+        path.remove(word);
+    }
+}
+
+
+// BFS 可以勉强通过，时间非常久，1515ms，估计再加test case就够呛了。上面的之所以通不过，是因为那个例子，input list长度是60多，但是实际上只要5个转换就可以达到，估计DFS运气不好
+class Solution {
+    
+    private int minLen;
+        
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        // though it says this never happen, still need to check incase
+        if (beginWord.equals(endWord)) {
+            return 1;
+        }
+        int len = 2;
+        // max is using all the words in wordList (endWord must included in wordList), so 1 + wordList.size()
+        Set<String> wordSet = new HashSet<>(), visited = new HashSet<>();
+        for (String word : wordList) {
+            wordSet.add(word);
+        }
+        
+        // BFS
+        Queue<String> queue = new LinkedList<>();
+        queue.offer(beginWord);
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                String word = queue.poll();
+                visited.add(word);
+                char[] chars = word.toCharArray();
+                for (int j = 0; j < chars.length; j++) {
+                    char originChar = chars[j];
+                    for (char c = 'a'; c <= 'z'; c++) {
+                        if (c == originChar) {
+                            continue;
+                        }
+                        chars[j] = c;
+                        String newWord = String.valueOf(chars);
+                        if (!visited.contains(newWord) && wordSet.contains(newWord)) {
+                            if (newWord.equals(endWord)) {
+                                return len;
+                            }
+                            queue.offer(newWord);
+                        }
+                    }
+                    chars[j] = originChar;
+                }
+            }
+            len++;
+        }
+        return 0;
+    }
+}

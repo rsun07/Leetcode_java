@@ -1,0 +1,90 @@
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode sortList(ListNode head) {
+        // termination condition
+        if (head == null || head.next == null) {
+            return head;
+        }
+        
+        // split
+        ListNode slow = head, fast = head;
+        while (fast != null && fast.next != null && fast.next.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+        ListNode nextHead = slow.next;
+        // avoid cycle
+        slow.next = null;
+        
+        ListNode head1 = sortList(head), head2 = sortList(nextHead);
+        
+        // merge
+        ListNode dummyHead = new ListNode();
+        head = dummyHead;
+        while (head1 != null && head2 != null) {
+            if (head1.val < head2.val) {
+                head.next = head1;
+                head1 = head1.next;
+            } else {
+                head.next = head2;
+                head2 = head2.next;
+            }
+            head = head.next;
+        }
+        if (head1 == null) {
+            head.next = head2;
+        } else {
+            head.next = head1;
+        }
+        return dummyHead.next;
+    }
+}
+
+
+// 下面附上array 的 merge sort的代码以供参考
+public class MergeSort {
+    public static void sort(Comparable[] a) {
+        Comparable[] aux = new Comparable[a.length];
+        sort(a, aux, 0, a.length -1);
+    }
+
+    private static void sort(Comparable[] a, Comparable[] aux, int lo, int hi) {
+        if (lo >= hi) return;
+        int mid = lo + (hi - lo) / 2;
+        sort(a, aux, lo, mid);
+        sort(a, aux, mid + 1, hi);
+        merge(a, aux, lo, mid, hi);
+    }
+
+    static void merge(Comparable[] a, Comparable[] aux, int lo, int mid, int hi) {
+        assert isSorted(a, lo, mid);
+        assert isSorted(a, mid+1, hi);
+
+        int i = lo;
+        int j = mid + 1;
+
+        // copy
+        for (int k = lo; k <= hi; k++) {
+            aux[k] = a[k];
+        }
+
+        // merge
+        for (int k = lo; k <= hi; k++) {
+            if (i > mid)                   a[k] = aux[j++];
+            else if (j > hi)               a[k] = aux[i++];
+            else if (less(aux[i], aux[j])) a[k] = aux[i++];
+            else                           a[k] = aux[j++];
+        }
+
+        assert isSorted(a, lo, hi);
+    }
+}

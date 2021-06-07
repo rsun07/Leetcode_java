@@ -1,0 +1,214 @@
+// 付费题
+/*
+In an infinite chess board with coordinates from -infinity to +infinity, you have a knight at square [0, 0].
+
+A knight has 8 possible moves it can make, as illustrated below. Each move is two squares in a cardinal direction, then one square in an orthogonal direction.
+
+
+
+Return the minimum number of steps needed to move the knight to the square [x, y].  It is guaranteed the answer exists.
+
+
+Example 1:
+
+Input: x = 2, y = 1
+Output: 1
+Explanation: [0, 0] → [2, 1]
+Example 2:
+
+Input: x = 5, y = 5
+Output: 4
+Explanation: [0, 0] → [2, 1] → [4, 2] → [3, 4] → [5, 5]
+ 
+
+Constraints:
+
+|x| + |y| <= 300
+
+
+马跳
+*/
+
+// 这道题，很明显就是用BFS来找，但是要特别注意，可以只找一个象限，而不是四个象限都找。四个象限都找，肯定会超时的。但是很难证明，我也没办法证明。就是评论里面有人说，除了[1,1]是需要借助其他象限才能到的，其他情况都是不需要，所以只考虑x，y大于0的情况。
+// 我尝试着写了一个内部类Coordinate，但是总会超时，不知道为什么，如果用String来存visited，就不会超时。
+
+class Solution {
+    public int minKnightMoves(int x, int y) {
+        int[][] moves = new int[][]{{-2,1}, {-1,2},{1,2},{2,1},{-2,-1},{-1,-2},{1,-2},{2,-1}};
+        Set<String> visited = new HashSet<>();
+        Queue<Coordinate> queue = new LinkedList<>();
+        Coordinate start = new Coordinate(0, 0);
+        queue.offer(start);
+        visited.add(start.toString());
+        int count = 0;
+        while (!queue.isEmpty()) {
+            int levelSize = queue.size();
+            for (int i = 0; i < levelSize; i++) {
+                Coordinate coor = queue.poll();
+                if (coor.x == x && coor.y == y) return count;
+                for (int[] move : moves) {
+                    int newX = coor.x + move[0], newY = coor.y + move[1];
+                    Coordinate newCoor = new Coordinate(newX, newY);
+                    if (visited.contains(newCoor.toString())) continue;
+                    queue.offer(newCoor);
+                    visited.add(newCoor.toString());
+                }
+            }
+            count++;
+        }
+        return -1;
+    }
+    
+    private class Coordinate {
+        int x;
+        int y;
+        Coordinate(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+        
+        public String toString() {
+            return x + ";" + y;
+        }
+    }
+}
+
+// 改成只检查一个象限。
+class Solution {
+    public int minKnightMoves(int x, int y) {
+        x = Math.abs(x);
+        y = Math.abs(y);
+        if (x == 1 && y == 1) return 2;
+        int[][] moves = new int[][]{{-2,1}, {-1,2},{1,2},{2,1},{-2,-1},{-1,-2},{1,-2},{2,-1}};
+        Set<String> visited = new HashSet<>();
+        Queue<Coordinate> queue = new LinkedList<>();
+        Coordinate start = new Coordinate(0, 0);
+        queue.offer(start);
+        visited.add(start.toString());
+        int count = 0;
+        while (!queue.isEmpty()) {
+            int levelSize = queue.size();
+            for (int i = 0; i < levelSize; i++) {
+                Coordinate coor = queue.poll();
+                if (coor.x == x && coor.y == y) return count;
+                for (int[] move : moves) {
+                    int newX = coor.x + move[0], newY = coor.y + move[1];
+                    if (newX < 0 || newY < 0) continue;
+                    Coordinate newCoor = new Coordinate(newX, newY);
+                    if (visited.contains(newCoor.toString())) continue;
+                    queue.offer(newCoor);
+                    visited.add(newCoor.toString());
+                }
+            }
+            count++;
+        }
+        return -1;
+    }
+    
+    private class Coordinate {
+        int x;
+        int y;
+        Coordinate(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+        
+        public String toString() {
+            return x + ";" + y;
+        }
+    }
+}
+
+// override equals的同时，必须要override hashCode
+class Solution {
+    public int minKnightMoves(int x, int y) {
+        x = Math.abs(x);
+        y = Math.abs(y);
+        if (x == 1 && y == 1) return 2;
+        int[][] moves = new int[][]{{-2,1}, {-1,2},{1,2},{2,1},{-2,-1},{-1,-2},{1,-2},{2,-1}};
+        Set<String> visited = new HashSet<>();
+        Queue<Coordinate> queue = new LinkedList<>();
+        Coordinate start = new Coordinate(0, 0);
+        queue.offer(start);
+        visited.add(start.toString());
+        int count = 0;
+        while (!queue.isEmpty()) {
+            int levelSize = queue.size();
+            for (int i = 0; i < levelSize; i++) {
+                Coordinate coor = queue.poll();
+                if (coor.x == x && coor.y == y) return count;
+                for (int[] move : moves) {
+                    int newX = coor.x + move[0], newY = coor.y + move[1];
+                    if (newX < 0 || newY < 0) continue;
+                    Coordinate newCoor = new Coordinate(newX, newY);
+                    if (visited.contains(newCoor.toString())) continue;
+                    queue.offer(newCoor);
+                    visited.add(newCoor.toString());
+                }
+            }
+            count++;
+        }
+        return -1;
+    }
+    
+    private class Coordinate {
+        int x;
+        int y;
+        Coordinate(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+        
+        public boolean equals(Coordinate other) {
+            return this.x == other.x && this.y == other.y;
+        }
+        
+        public int hashCode() {
+            return x * 300 + y;
+        }
+        
+        public String toString() {
+            return x + ";" + y;
+        }
+    }
+}
+
+
+// 做了一个小测验，如果不重写hashCode，不重写equals，非常可怕
+class Solution {
+    public int minKnightMoves(int x, int y) {
+        Coordinate c1 = new Coordinate(12, 222), c2 = new Coordinate(12, 222);
+        System.out.println(c1.hashCode());
+        System.out.println(c2.hashCode());
+        System.out.println(c1.equals(c2));
+        return -1;
+    }
+    
+    private class Coordinate {
+        int x;
+        int y;
+        Coordinate(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+        
+//         public boolean equals(Coordinate other) {
+//             return this.x == other.x && this.y == other.y;
+//         }
+        
+//         public int hashCode() {
+//             return x * 300 + y;
+//         }
+        
+        public String toString() {
+            return x + ";" + y;
+        }
+    }
+}
+
+/*
+输出是
+1508646930
+1291286504
+false
+*/

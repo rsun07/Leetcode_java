@@ -1,0 +1,43 @@
+// 付费题，BST特性的考察
+
+/*
+Given a binary search tree and a node in it, find the in-order successor of that node in the BST.
+
+The successor of a node p is the node with the smallest key greater than p.val.
+
+ 
+
+Example 1:
+
+
+Input: root = [2,1,3], p = 1
+Output: 2
+Explanation: 1's in-order successor node is 2. Note that both p and the return value is of TreeNode type.
+Example 2:
+
+
+Input: root = [5,3,6,2,4,null,null,1], p = 6
+Output: null
+Explanation: There is no in-order successor of the current node, so the answer is null.
+ 
+
+Note:
+
+If the given node has no in-order successor in the tree, return null.
+It's guaranteed that the values of the tree are unique.
+*/
+
+// 先要找到这个node。如果这个node有右子树。则一定是右子树里最左边，也就是最小的那一个。另一个candidate是parent。
+// 如果p是parent的左子树，p如果有右子树，那么p的右子树一定是大于p小于parent的，所以一定在右子树里面找。如果p没有右子树，则是parent。
+// 如果p是parent的右子树，不可能是parent因为p比parent大。一定是p的右子树里最小的一个，如果p没有右子树，则要去parent的parent那边找。
+// 这时候要问面试官，p是否一定在tree里面？从test case来看，应该是一定在的
+class Solution {
+    public TreeNode inorderSuccessor(TreeNode root, TreeNode p) {
+        if (root == null) return null;
+        if (root.val <= p.val) return inorderSuccessor(root.right, p);
+        TreeNode candidate = inorderSuccessor(root.left, p);
+        // in this line we know p.val < root.val, and candidate.val < root.val because we go left
+        if (candidate != null && candidate.val > p.val) return candidate;
+        return root;
+    }
+}

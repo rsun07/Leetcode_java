@@ -1,0 +1,57 @@
+// 付费题，自底向上，level order
+/*
+Given a binary tree, collect a tree's nodes as if you were doing this: Collect and remove all leaves, repeat until the tree is empty.
+
+ 
+
+Example:
+
+Input: [1,2,3,4,5]
+  
+          1
+         / \
+        2   3
+       / \     
+      4   5    
+
+Output: [[4,5,3],[2],[1]]
+ 
+
+Explanation:
+
+1. Removing the leaves [4,5,3] would result in this tree:
+
+          1
+         / 
+        2          
+ 
+
+2. Now removing the leaf [2] would result in this tree:
+
+          1          
+ 
+
+3. Now removing the leaf [1] would result in the empty tree:
+
+          []         
+[[3,5,4],[2],[1]], [[3,4,5],[2],[1]], etc, are also consider correct answers since per each level it doesn't matter the order on which elements are returned.
+*/
+
+// BFS行不通，因为不知道下面到底有多少层。最简单的就是下面这种DFS
+class Solution {
+    public List<List<Integer>> findLeaves(TreeNode root) {
+        List<List<Integer>> output = new ArrayList<>();
+        dfs(root, output);
+        return output;
+    }
+    
+    private int dfs(TreeNode root, List<List<Integer>> output) {
+        if (root == null) return 0;
+        // 要特别注意，如果一个子树是null，另一个不是的情况，这种情况高度要根据不是null的那个子树来定，也就是下面这个max的逻辑。
+        int height = Math.max(dfs(root.left, output), dfs(root.right, output));
+        if (height >= output.size()) output.add(new ArrayList<>());
+        output.get(height).add(root.val);
+        return height + 1;
+    }
+}
+

@@ -1,0 +1,60 @@
+// FB高频题目，易错点很多。
+
+// 首先，涉及到String整合到数字，就要考虑数字可能有多个位数。例子里面一般都只有一位数，可能会给，万一count是两位数怎么办。
+// 其次，利用好循环 i == chars.length 这个做判断，来把最后一个情况在循环里就处理了，而不是循环出去以后另做打算，因为逻辑可能很长。
+// 再者，利用好String本身提供的Function，看下面就知道了。
+
+class Solution {
+    public int compress(char[] chars) {
+        if (chars == null || chars.length == 0) {
+            return 0;
+        }
+        int i = 0;
+        int count = 1;
+        for (int j = 0; j < chars.length; j++) {
+            if (j != chars.length - 1 && chars[j] == chars[j+1]) {
+                count++;
+            } else {
+                chars[i++] = chars[j];
+                if (count > 1) {
+                    Stack<Integer> digits = new Stack<>();
+                    while (count > 0) {
+                        digits.push(count%10);
+                        count /= 10;
+                    }
+                    while (!digits.isEmpty()) {
+                        chars[i++] = Character.forDigit(digits.pop(), 10);
+                    }
+                }
+                count = 1;
+            }
+        }
+        return i;
+    }
+}
+
+// 上面的解法费时费力，下面的解法不费吹灰之力，10分钟肯定可以搞定。
+class Solution {
+    public int compress(char[] chars) {
+        if (chars == null || chars.length == 0) {
+            return 0;
+        }
+        int i = 0;
+        int count = 1;
+        for (int j = 0; j < chars.length; j++) {
+            if (j != chars.length - 1 && chars[j] == chars[j+1]) {
+                count++;
+            } else {
+                chars[i++] = chars[j];
+                if (count > 1) {
+                    char[] counts = String.valueOf(count).toCharArray();
+                    for (char digit : counts) {
+                        chars[i++] = digit;
+                    }
+                }
+                count = 1;
+            }
+        }
+        return i;
+    }
+}

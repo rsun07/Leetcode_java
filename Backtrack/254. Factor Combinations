@@ -1,0 +1,111 @@
+/*
+收费题
+
+Numbers can be regarded as product of its factors. For example,
+
+8 = 2 x 2 x 2;
+  = 2 x 4.
+Write a function that takes an integer n and return all possible combinations of its factors.
+
+Note:
+
+You may assume that n is always positive.
+Factors should be greater than 1 and less than n.
+Example 1:
+
+Input: 1
+Output: []
+Example 2:
+
+Input: 37
+Output:[]
+Example 3:
+
+Input: 12
+Output:
+[
+  [2, 6],
+  [2, 2, 3],
+  [3, 4]
+]
+Example 4:
+
+Input: 32
+Output:
+[
+  [2, 16],
+  [2, 2, 8],
+  [2, 2, 2, 4],
+  [2, 2, 2, 2, 2],
+  [2, 4, 4],
+  [4, 8]
+]
+
+*/
+
+// 其实这道题不是backtrack，更像是数学题，或者说是DFS的题目。想法不难，难点在于如何去重。老办法，只要结果永远是从小到大排列的，就很容易去重。
+
+
+// 我一开始的想法是，从4开始算，用dp的办法，把所有的从4到n的factors的结果都算出来。后来仔细想，这样好浪费，绝大多数其实都用不上，不如用现在这样cache的办法来做。还有一种做法就是，每次都不cache，但是把必须大于几传过去。这样的好处是，拿到的结果即可用，不需要再filter看mFactor的第一个数字是否大于i
+
+class Solution {
+    
+    private Map<Integer, List<List<Integer>>> cache = new HashMap<>();
+    
+    public List<List<Integer>> getFactors(int n) {
+        if (n < 4) {
+            return Collections.emptyList();
+        }
+        if (cache.containsKey(n)) {
+            return cache.get(n);
+        }
+        List<List<Integer>> factors = new ArrayList<>();
+        // 注意这里i*i必须等于n，如果去掉等于，遇到16这样的数字会漏掉
+        for (int i = 2; i*i <= n; i++) {
+            if (n % i!= 0) continue;
+            // m >= i always true, see the loop termination
+            int m = n/i;
+            factors.add(List.of(i, m));
+            List<List<Integer>> mFactors = getFactors(m);
+            for (List<Integer> mFactor : mFactors) {
+                if (mFactor.get(0) >= i) {
+                    List<Integer> factor = new ArrayList<>();
+                    factor.add(i);
+                    factor.addAll(mFactor);
+                    factors.add(factor);
+                }
+            }
+        }
+        cache.put(n, factors);
+        return factors;
+    }
+}
+
+
+
+class Solution {    
+    public List<List<Integer>> getFactors(int n) {
+        if (n < 4) {
+            return Collections.emptyList();
+        }
+        return getFactors(2, n);
+    }
+    
+    private List<List<Integer>> getFactors(int start, int n) {
+        List<List<Integer>> factors = new ArrayList<>();
+        for (int i = start; i*i <= n; i++) {
+            if (n % i!= 0) continue;
+            // m >= i always true, see the loop termination
+            int m = n/i;
+            factors.add(List.of(i, m));
+            List<List<Integer>> mFactors = getFactors(i, m);
+            for (List<Integer> mFactor : mFactors) {
+                List<Integer> factor = new ArrayList<>();
+                factor.add(i);
+                factor.addAll(mFactor);
+                factors.add(factor);
+            }
+        }
+        return factors;
+    }
+}

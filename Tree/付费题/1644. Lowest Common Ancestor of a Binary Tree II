@@ -1,0 +1,155 @@
+// 付费题。
+// 236. Lowest Common Ancestor of a Binary Tree，题目的follow up, p和q不能保证一定在tree里，不能想236一样，找到任意一个就返回。需要搜索全部树。如果p或者q中的一个不在tree里，要返回null。
+
+// 1676. Lowest Common Ancestor of a Binary Tree IV, 也是类似的。只不过不是p和q，而是一个array的nodes，而且保证所有的nodes都在tree里面。
+
+// 第一版解决办法
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        TreeInfo info = search(root, p, q);
+        return info.findTwo ? info.node : null;
+    }
+    
+    private TreeInfo search(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null) return new TreeInfo(null, false, false);
+        
+        TreeInfo left = search(root.left, p, q);
+        if (left.findTwo) return left;
+        
+        TreeInfo right = search(root.right, p, q);
+        if (right.findTwo) return right;
+        
+        if (left.findOne && right.findOne
+           || (left.findOne || right.findOne) && (root == p || root == q)) {
+            return new TreeInfo(root, false, true);
+        }
+        
+        if (left.findOne) return left;
+        if (right.findOne) return right;
+        if (root == p) return new TreeInfo(p, true, false);
+        if (root == q) return new TreeInfo(q, true, false);
+        return new TreeInfo(null, false, false);
+    }
+    
+    private class TreeInfo {
+        TreeNode node;
+        boolean findOne;
+        boolean findTwo;
+        TreeInfo(TreeNode node, boolean findOne, boolean findTwo) {
+            this.node = node;
+            this.findOne = findOne;
+            this.findTwo = findTwo;
+        }
+    }
+}
+
+// 稍加简化
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        TreeInfo info = search(root, p, q);
+        return info.count == 2 ? info.node : null;
+    }
+    
+    private TreeInfo search(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null) return new TreeInfo(null, 0);
+        
+        TreeInfo left = search(root.left, p, q);
+        if (left.count == 2) return left;
+        
+        TreeInfo right = search(root.right, p, q);
+        if (right.count == 2) return right;
+        
+        if (left.count == 1 && right.count == 1
+           || (left.count == 1 || right.count == 1) && (root == p || root == q)) {
+            return new TreeInfo(root, 2);
+        }
+        
+        if (left.count == 1) return left;
+        if (right.count == 1) return right;
+        if (root == p) return new TreeInfo(p, 1);
+        if (root == q) return new TreeInfo(q, 1);
+        return new TreeInfo(null, 0);
+    }
+    
+    private class TreeInfo {
+        TreeNode node;
+        int count;
+        TreeInfo(TreeNode node, int count) {
+            this.node = node;
+            this.count = count;
+        }
+    }
+}
+
+// 再简化
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        TreeInfo info = search(root, p, q);
+        return info.count == 2 ? info.node : null;
+    }
+    
+    private TreeInfo search(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null) return new TreeInfo(null, 0);
+        
+        TreeInfo left = search(root.left, p, q);
+        if (left.count == 2) return left;
+        
+        TreeInfo right = search(root.right, p, q);
+        if (right.count == 2) return right;
+        
+        int count = left.count + right.count;
+        if (root == p || root == q) count++;
+        if (count == 2) return new TreeInfo(root, 2);
+        return new TreeInfo(root, count);
+    }
+    
+    private class TreeInfo {
+        TreeNode node;
+        int count;
+        TreeInfo(TreeNode node, int count) {
+            this.node = node;
+            this.count = count;
+        }
+    }
+}
+
+
+// 1676. Lowest Common Ancestor of a Binary Tree IV。 的解法
+
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+class Solution {
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode[] nodes) {
+        return search(root, new HashSet<>(Arrays.asList(nodes))).node;
+    }
+    
+    private TreeInfo search(TreeNode root, Set<TreeNode> nodes) {
+        if (root == null) return new TreeInfo(null, 0);
+        
+        TreeInfo left = search(root.left, nodes);
+        if (left.count == nodes.size()) return left;
+        
+        TreeInfo right = search(root.right, nodes);
+        if (right.count == nodes.size()) return right;
+        
+        int count = left.count + right.count;
+        if (nodes.contains(root)) count++;
+        return new TreeInfo(root, count);
+    }
+    
+    private class TreeInfo {
+        TreeNode node;
+        int count;
+        TreeInfo(TreeNode node, int count) {
+            this.node = node;
+            this.count = count;
+        }
+    }
+}

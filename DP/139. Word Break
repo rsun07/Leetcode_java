@@ -1,0 +1,74 @@
+// 2021,1月，DP解法，很straight forward
+
+class Solution {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        if (s == null || s.length() == 0) {
+            throw new IllegalArgumentException("s is null or empty");
+        }
+        boolean[] dp = new boolean[s.length()+1];
+        // set this to true to carter the case when whole string is included in dict
+        dp[0] = true;
+        Set<String> wordSet = new HashSet<>(wordDict);
+        for (int i = 1; i <= s.length(); i++) {
+            for (int j = i-1; j >= 0 && !dp[i]; j--) {
+                // move dp[j] before substring to save calculation time. 
+                dp[i] = dp[j] && wordSet.contains(s.substring(j, i));
+            }
+        }
+        return dp[s.length()];
+    }
+}
+
+
+// 2020 3月BFS解法
+class Solution {
+    // BFS
+    public boolean wordBreak(String s, List<String> wordDict) {
+        if (s == null || s.length() == 0) return false;
+        Set<String> words = new HashSet<>();
+        for (String word : wordDict) 
+            words.add(word);
+        // value will be last word end index
+        Queue<Integer> queue = new LinkedList<>();
+        queue.offer(0);
+        boolean[] visited = new boolean[s.length()];
+        while (!queue.isEmpty()) {
+            int lo = queue.poll();
+            if (visited[lo]) continue;
+            for (int hi = lo + 1; hi <= s.length(); hi++) {
+                if (words.contains(s.substring(lo, hi))) {
+                    if (hi == s.length()) return true;
+                    queue.offer(hi);
+                }
+            }
+            visited[lo] = true;
+        }
+        return false;
+    }
+}
+
+// 2020年2月一种奇怪的解法
+class Solution {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        List<Integer> trueIndexes = new ArrayList<>();
+        Set<String> words = new HashSet<>();
+        for (String word : wordDict) words.add(word);
+        
+        for (int i = 1; i <= s.length(); i++) {
+            String curStr = s.substring(0, i);
+            if (words.contains(curStr)) {
+                trueIndexes.add(i);
+                continue;
+            }
+            for (int j = trueIndexes.size() - 1; j >= 0; j--) {
+                String potentialWord = curStr.substring(trueIndexes.get(j));
+                if (words.contains(potentialWord)) {
+                    trueIndexes.add(i);
+                    break;
+                }
+            }
+        }
+        if (trueIndexes.size() == 0) return false;
+        return trueIndexes.get(trueIndexes.size()-1) == s.length();
+    }
+}

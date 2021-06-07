@@ -1,0 +1,64 @@
+// 付费题，FB tag，用array和数字表示tree
+
+/*
+If the depth of a tree is smaller than 5, then this tree can be represented by a list of three-digits integers.
+
+For each integer in this list:
+
+The hundreds digit represents the depth D of this node, 1 <= D <= 4.
+The tens digit represents the position P of this node in the level it belongs to, 1 <= P <= 8. The position is the same as that in a full binary tree.
+The units digit represents the value V of this node, 0 <= V <= 9.
+Given a list of ascending three-digits integers representing a binary tree with the depth smaller than 5, you need to return the sum of all paths from the root towards the leaves.
+
+It's guaranteed that the given list represents a valid connected binary tree.
+
+Example 1:
+
+Input: [113, 215, 221]
+Output: 12
+Explanation: 
+The tree that the list represents is:
+    3
+   / \
+  5   1
+
+The path sum is (3 + 5) + (3 + 1) = 12.
+ 
+
+Example 2:
+
+Input: [113, 221]
+Output: 4
+Explanation: 
+The tree that the list represents is: 
+    3
+     \
+      1
+
+The path sum is (3 + 1) = 4.
+*/
+
+class Solution {
+    public int pathSum(int[] nums) {
+        if (nums == null || nums.length == 0) return 0;
+        Integer[][] tree = new Integer[4][8];
+        
+        
+        for (int num : nums) {
+            int i = num / 100 - 1, j = (num / 10) % 10 - 1, digit = num % 10;
+            tree[i][j] = digit;
+        }
+        
+        return backtrack(tree, 0, 0, 0);
+    }
+    
+    private Integer backtrack(Integer[][] tree, int i, int j, int sum) {
+        if (i >= 4 || j >= 8 || tree[i][j] == null) return null;
+        sum += tree[i][j];
+        Integer leftSum = backtrack(tree, i+1, j*2, sum), rightSum = backtrack(tree, i+1, j*2+1, sum);
+        if (leftSum == null && rightSum == null) return sum;
+        leftSum = leftSum == null ? 0 : leftSum;
+        rightSum = rightSum == null ? 0 : rightSum;
+        return leftSum + rightSum;
+    }
+}

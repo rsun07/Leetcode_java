@@ -1,0 +1,3 @@
+其实跟tree有异曲同工，不过递归用的少一点，大多数情况就是需要维持一些node的reference，然后进行一些反转和重新连接next的操作。
+
+注意，跟tree类似，最好是直接操作head，node，不要再head node的情况下去操作head.next, 很容易出错。

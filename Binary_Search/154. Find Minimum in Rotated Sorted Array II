@@ -1,0 +1,50 @@
+// 比较难想的是两个点
+// 1. 如何比较lo hi和mid所对应数组数字的大小，实现每次比较后排除一半
+// 2. 最后返回nums[lo] 还是 nums [hi]。 如果else里面的lo++，则返回nums[hi],这里是hi--，则返回nums[lo]
+// 具体为什么是这样的呢？最后肯定是停留在一个数字，lo = hi = mid, 这个数字就是最小的。会hi--，所以要返回nums[lo]
+
+class Solution {
+    public int findMin(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+        int lo = 0, hi = nums.length - 1;
+        while (lo <= hi) {
+            int mid = lo + (hi - lo) / 2;
+            if (nums[mid] > nums[hi]) {
+                lo = mid + 1;
+            } else if (nums[mid] < nums[hi]) {
+                hi = mid;
+            } else {
+                hi--;
+            }
+        }
+        return nums[lo];
+    }
+}
+
+
+// 这个方法不如上面的好。如果while条件是lo <= hi, 则很可能出现死循环。当lo == hi的时候，小于nums[0]， 会永远hi = mid不能前进。
+class Solution {
+    public int findMin(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+        int lo = 0, hi = nums.length - 1;
+        while (lo < hi) {
+            if (nums[lo] < nums[hi]) {
+                return nums[lo];
+            }
+            int mid = lo + (hi-lo)/2;
+            // 经过前一个if判断，这里可以肯定，结果不是lo，所以当mid等于lo的时候，往后移动
+            if (nums[mid] > nums[0]) {
+                lo = mid + 1;
+            } else if (nums[mid] < nums[0]) {
+                hi = mid;
+            } else {
+                lo++;
+            }
+        }
+        return nums[lo];
+    }
+}

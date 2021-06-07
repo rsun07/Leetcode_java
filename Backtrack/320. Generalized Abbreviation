@@ -1,0 +1,89 @@
+// 付费题
+
+/*
+A word's generalized abbreviation can be constructed by taking any number of non-overlapping substrings and replacing them with their respective lengths. For example, "abcde" can be abbreviated into "a3e" ("bcd" turned into "3"), "1bcd1" ("a" and "e" both turned into "1"), and "23" ("ab" turned into "2" and "cde" turned into "3").
+
+Given a string word, return a list of all the possible generalized abbreviations of word. Return the answer in any order.
+
+ 
+
+Example 1:
+
+Input: word = "word"
+Output: ["4","3d","2r1","2rd","1o2","1o1d","1or1","1ord","w3","w2d","w1r1","w1rd","wo2","wo1d","wor1","word"]
+Example 2:
+
+Input: word = "a"
+Output: ["1","a"]
+ 
+
+Constraints:
+
+1 <= word.length <= 15
+word consists of only lowercase English letters.
+*/
+
+// 审题不仔细，看错了，结果写下了如下的答案。优化的话，可以加cache。
+// 会少掉两部分都被替换成数字的答案。比如 1wr1, ["word","1ord","w1rd","wo1d","wor1","2rd","w2d","wo2","3d","w3","4"]
+// ["4","3d","2r1","2rd","1o2","1o1d","1or1","1ord","w3","w2d","w1r1","w1rd","wo2","wo1d","wor1","word"]
+class Solution {
+    public List<String> generateAbbreviations(String word) {
+        if (word == null || word.length() == 0) {
+            return Collections.emptyList();
+        }
+        List<String> output = new ArrayList<>();
+        output.add(word);
+        for (int len = 1; len <= word.length(); len++) {
+            for (int i = 0; i <= word.length() - len; i++) {
+                String right = i + len < word.length() ? word.substring(i+len) : "";
+                output.add(word.substring(0, i) + len + right);
+            }
+        }
+        return output;
+    }
+}
+
+// 题目其实不难， backtrack就两种状态，换成1和不换成1. 写结果的时候再把数字家和。因为题目中说输入只有英文小写字母。
+class Solution {
+    public List<String> generateAbbreviations(String word) {
+        if (word == null || word.length() == 0) {
+            return Collections.emptyList();
+        }
+        List<String> output = new ArrayList<>();
+        backtrack(0, word.toCharArray(), output);
+        return output;
+    }
+    
+    private void backtrack(int i, char[] chars, List<String> output) {
+        if (i == chars.length) {
+            output.add(createStr(chars));
+            return;
+        }
+        backtrack(i+1, chars, output);
+        char c = chars[i];
+        chars[i] = '1';
+        backtrack(i+1, chars, output);
+        chars[i] = c;
+    }
+    
+    private String createStr(char[] chars) {
+        int num = 0;
+        StringBuilder sb = new StringBuilder();
+        for (char c : chars) {
+            if (c == '1') {
+                num++;
+            } else {
+                if (num > 0) {
+                    sb.append(num);
+                    num = 0;
+                }
+                sb.append(c);
+            }
+        }
+        if (num > 0) {
+            sb.append(num);
+        }
+        return sb.toString();
+    }
+}
+

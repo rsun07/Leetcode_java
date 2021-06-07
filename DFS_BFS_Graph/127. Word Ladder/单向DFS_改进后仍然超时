@@ -1,0 +1,148 @@
+// 根据单向BFS改进后的结果，仍然超时。
+// 总结，为什么此题目DFS比BFS慢很多？回到分析这个graph的模型，看成word和word之间是双向链表，这个graph是错综复杂的，很多的word之间都相互联系。比如那个总是超时的input，word的length只有2，几乎每两个word之间都有联系。BFS是不会往回走的，一路往下走，而DFS则是会往回走的。比如我从一个word深入到了最底端返回，然后我会在visited里面把这个path里的words完全移除，重新再来一遍，这就造成了一遍又一遍的visit所有的words。我这里想了一个优化，改进DFS，就是引入一个visited level。也就是说，一个word，当我们做过一次DFS以后，它要几次到达endWord，其实是永恒不变的，我们没必要再做一次DFS了，直接把结果拿来用就行了。
+// DFS cache要注意，因为path上面的word是不能再用来跑DFS的，所以cache的结果可能不是真正的最短结果？我想了一下，感觉cache的结果应该是最短的结果，如果path上的node有更短的路径，则一定比cache里得到的路径短，因为word到path里的路径，和path里任意node直接的路径，肯定是path直接的更短。
+
+// 这一题，DFS是肯定要跑完整个图才行的。BFS则不一定需要，所以用BFS肯定更好。而且DFS太复杂，面试的时候先避开。
+
+class Solution {
+    
+    private int minLen;
+    private Map<String, List<String>> transfers;
+        
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        // max is using all the words in wordList (endWord must included in wordList), so 1 + wordList.size()
+        this.minLen = wordList.size() + 2;
+        this.transfers = buildGraph(beginWord, wordList);
+        dfs(beginWord, endWord, new HashSet<String>());
+        return minLen > wordList.size() + 1 ? 0 : minLen;
+    }
+    
+    private void dfs(String word, String target, Set<String> path) {
+        if (word.equals(target)) {
+            minLen = Math.min(minLen, path.size() + 1);
+            return;
+        }
+        path.add(word);
+        for (String nextWord : transfers.get(word)) {
+            if (!path.contains(nextWord)) {
+                dfs(nextWord, target, path);
+            }
+        }
+        path.remove(word);
+    }
+    
+    // here we use List rather than Set, because we don't need to check contains, so List is faster as Set need to calcualte hash
+    private Map<String, List<String>> buildGraph(String beginWord, List<String> wordList) {
+        Map<String, List<String>> transfers = new HashMap<>();
+        // adding beginWord to the list could make code easier, but it will build some unnecessary link. e.g. word in wordList to beginWord
+        Set<String> wordSet = new HashSet<>(), visited = new HashSet<>();
+        for (String word : wordList) {
+            wordSet.add(word);
+        }
+        transfers.put(beginWord, getAdjList(beginWord, wordSet));
+        for (String word : wordList) {
+            transfers.put(word, getAdjList(word, wordSet));
+        }
+        return transfers;
+    }
+    
+    private List<String> getAdjList(String word, Set<String> wordSet) {
+        char[] chars = word.toCharArray();
+        List<String> adjList = new ArrayList<>();
+        for (int j = 0; j < chars.length; j++) {
+            char originChar = chars[j];
+            for (char c = 'a'; c <= 'z'; c++) {
+                if (c == originChar) {
+                    continue;
+                }
+                chars[j] = c;
+                String newWord = String.valueOf(chars);
+                if (wordSet.contains(newWord)) {
+                    adjList.add(newWord);
+                }
+            }
+            chars[j] = originChar;
+        }
+        return adjList;
+    }
+}
+
+// 先把DFS升级成用pattern来判断，这是目前最快的判断nextword的方法。
+
+
+
+// 加了cache以后，快了很多，但是有一个很长的test case过不去，会出错。答案是11，我返回12
+class Solution {
+    
+    private int minLen, maxLen;
+    private Map<String, List<String>> patternToWords;
+    
+    // 按照题目的要求，返回的path len是描述整个path上面有几个word，而不是箭头的个数。所以这里我们一律存path上word的个数。所以对于endWord，结果是1
+    private Map<String, Integer> dfsCache;
+        
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        // max is using all the words in wordList (endWord must included in wordList), so 1 + wordList.size()
+        this.minLen = maxLen = wordList.size() + 2;
+        this.patternToWords = new HashMap<>();
+        this.dfsCache = new HashMap<>();
+        // termination dfs
+        dfsCache.put(endWord, 1);
+        setPatternToWords(beginWord, patternToWords);
+        for (String word : wordList) {
+            setPatternToWords(word, patternToWords);
+        }
+        dfs(beginWord, new HashSet<String>());
+        for (Map.Entry<String, Integer> entry : dfsCache.entrySet()) {
+            if (entry.getValue() >= 11 && entry.getValue() < 12) {
+                System.out.println(entry);
+            }
+        }
+        return minLen > wordList.size() + 1 ? 0 : minLen;
+    }
+    
+    // return value should be the min len from the word to target
+    private int dfs(String word, Set<String> path) {
+        if (dfsCache.containsKey(word)) {
+            int localMinLen = dfsCache.get(word);
+            // word itself hasn't been added to path yet, so if word is endWord, locLMinLen is 1
+            minLen = Math.min(minLen, localMinLen + path.size());
+            return localMinLen;
+        }
+        path.add(word);
+        List<String> patterns = getAllPatterns(word);
+        int localMinLen = maxLen;
+        for (String pattern : patterns) {
+            for (String nextWord : patternToWords.getOrDefault(pattern, Collections.emptyList()))  {
+                if (!path.contains(nextWord)) {
+                    // dfs return will be the length from nextWord to endWord, localMinLen is the min length from word to endWord
+                    localMinLen = Math.min(localMinLen, dfs(nextWord, path) + 1);
+                }
+            }
+        }
+        path.remove(word);
+        dfsCache.put(word, localMinLen);
+        return localMinLen;
+    }
+    
+    private void setPatternToWords(String word, Map<String, List<String>> patternToWords) {
+        List<String> patterns = getAllPatterns(word);
+        for (String pattern : patterns) {
+            if (!patternToWords.containsKey(pattern)) {
+                patternToWords.put(pattern, new ArrayList<>());
+            }
+            patternToWords.get(pattern).add(word);
+        }
+    }
+    
+    private List<String> getAllPatterns(String word) {
+        List<String> res = new ArrayList<>();
+        char[] chars = word.toCharArray();
+        for (int j = 0; j < chars.length; j++) {
+            char originChar = chars[j];
+            chars[j] = '*';
+            res.add(String.valueOf(chars));
+            chars[j] = originChar;
+        }
+        return res;
+    }
+}

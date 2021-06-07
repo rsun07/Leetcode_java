@@ -1,0 +1,136 @@
+// 这一题跟 23. Merge k Sorted Lists 有类似的地方。但是也有一些不同。
+/*
+假设一共k个String，每个String的长度的n
+1. 1和2比，比完和3比，以此类推。时间复杂度是O(kn)。空间复杂度O(1)，为什么23题里面，时间复杂度是kn^2? 因为那边是merge list到一起，这里不会merge到一起，1
+和2比较完，1就没用了，留下一个prefix传下去。而23题里面，merge的list越来越长
+2. 竖着比较，第一到第k个list的第一个字母先比较。时间复杂度还是O(kn), 当所有字符串都一样的情况下。但是大多数情况下，当String长度够长，k不是特别长的时候，performance应该比1要好。
+3. 两两比较，类似merge sort那种(divide and conquer)。时间复杂度是O(nlogk), 如果可以改变input String list，覆盖掉，则空间复杂度可以是 O(1), 否则空间复杂度 O(n)
+
+4. Leetcode提供的，所谓binary search解法。我认为此解法把简单问题复杂化了，就不写了。
+
+Follow up： 如果要经常性比较一个新的String和已知的一个String array里的Strings的common prefix。
+大概就是建立一个prefix trie, 毕业多年，都忘得差不多了
+*/
+
+// 解法1：
+// 第一次写就搞错了，比如input["ab"，"a"]，我的代码返回了"ab"，因为忽略了prefix更长的时候要cut
+class Solution {
+    public String longestCommonPrefix(String[] strs) {
+        if (strs == null || strs.length == 0) {
+            return "";
+        }
+        String prefix = strs[0];
+        for (int i = 1; i < strs.length; i++) {
+            // attention: remember here, easy to make mistake when input is ["ab", "a"]
+            if (prefix.length() > strs[i].length()) {
+                prefix = prefix.substring(0, strs[i].length());
+            }
+            for (int j = 0; j < prefix.length(); j++) {
+                if (prefix.charAt(j) != strs[i].charAt(j)) {
+                    // attention: substring(x) means substring from index x to end;
+                    // can improve by using StringBuilder, may faster than using substring() method
+                    prefix = prefix.substring(0, j);
+                    break;
+                }
+            }
+        }
+        return prefix;
+    }
+}
+
+// 解法2：
+class Solution {
+    public String longestCommonPrefix(String[] strs) {
+        if (strs == null || strs.length == 0) {
+            return "";
+        }
+        for (int i = 0; i < strs[0].length(); i++) {
+            char c = strs[0].charAt(i);
+            for (int j = 1; j < strs.length; j++) {
+                if (i >= strs[j].length() || strs[j].charAt(i) != c) {
+                    return strs[0].substring(0, i);
+                }
+            }
+        }
+        return strs[0];
+    }
+}
+
+// 实际跑起来的结果，用substring比用stringbuilder更快。可能是因为substring只需要一次，stringbuilder要每次append，最后还要再生成string
+class Solution {
+    public String longestCommonPrefix(String[] strs) {
+        if (strs == null || strs.length == 0) {
+            return "";
+        }
+        StringBuilder prefix = new StringBuilder();
+        for (int i = 0; i < strs[0].length(); i++) {
+            char c = strs[0].charAt(i);
+            for (int j = 1; j < strs.length; j++) {
+                if (i >= strs[j].length() || strs[j].charAt(i) != c) {
+                    return prefix.toString();
+                }
+            }
+            prefix.append(c);
+        }
+        return prefix.toString();
+    }
+}
+
+// 解法3：
+class Solution {
+    public String longestCommonPrefix(String[] strs) {
+        if (strs == null || strs.length == 0) {
+            return "";
+        }
+        int k = strs.length - 1;
+        while (k > 0) {
+            for (int i = 0; i < k-i; i++) {
+                strs[i] = getCommonPrefix(strs[i], strs[k-i]);
+            }
+            k /= 2;
+        }
+        return strs[0];
+    }
+    
+    private String getCommonPrefix(String s1, String s2) {
+        if (s1 == null || s2 == null) {
+            return "";
+        }
+        for (int i = 0; i < s1.length(); i++) {
+            if (i >= s2.length() || s1.charAt(i) != s2.charAt(i)) {
+                return s1.substring(0, i);
+            }
+        }
+        return s1;
+    }
+}
+
+// 递归写法
+class Solution {
+    public String longestCommonPrefix(String[] strs) {
+        if (strs == null || strs.length == 0) {
+            return "";
+        }
+        return longestCommonPrefix(strs, 0, strs.length-1);
+    }
+    
+    private String longestCommonPrefix(String[] strs, int lo, int hi) {
+        if (lo >= hi) {
+            return strs[hi];
+        }
+        int mid = lo + (hi-lo)/2;
+        return getCommonPrefix(longestCommonPrefix(strs, lo, mid), longestCommonPrefix(strs, mid+1, hi));
+    }
+    
+    private String getCommonPrefix(String s1, String s2) {
+        if (s1 == null || s2 == null) {
+            return "";
+        }
+        for (int i = 0; i < s1.length(); i++) {
+            if (i >= s2.length() || s1.charAt(i) != s2.charAt(i)) {
+                return s1.substring(0, i);
+            }
+        }
+        return s1;
+    }
+}

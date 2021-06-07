@@ -1,0 +1,222 @@
+// 付费题，FB
+
+/*
+Given the root of a binary tree, find the largest subtree, which is also a Binary Search Tree (BST), where the largest means subtree has the largest number of nodes.
+
+A Binary Search Tree (BST) is a tree in which all the nodes follow the below-mentioned properties:
+
+The left subtree values are less than the value of their parent (root) node's value.
+The right subtree values are greater than the value of their parent (root) node's value.
+Note: A subtree must include all of its descendants.
+
+Follow up: Can you figure out ways to solve it with O(n) time complexity?
+
+ 
+
+Example 1:
+
+
+
+Input: root = [10,5,15,1,8,null,7]
+Output: 3
+Explanation: The Largest BST Subtree in this case is the highlighted one. The return value is the subtree's size, which is 3.
+Example 2:
+
+Input: root = [4,2,7,2,3,5,null,2,null,null,null,null,null,1]
+Output: 2
+ 
+
+Constraints:
+
+The number of nodes in the tree is in the range [0, 10^4].
+-10^4 <= Node.val <= 10^4
+*/
+
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+
+// 我是觉得我这个思路，我自己更能接受。
+class Solution {
+    
+    public int largestBSTSubtree(TreeNode root) {
+        return search(root).count;
+    }
+    
+    private TreeInfo search(TreeNode root) {
+        if (root == null) {
+            return new TreeInfo(null, null, true, 0);
+        }
+        TreeInfo left = search(root.left), right = search(root.right);
+        if (!left.isBST || !right.isBST
+            || left.max != null && left.max >= root.val 
+            || right.min != null && right.min <= root.val) 
+            return new TreeInfo(null, null, false, Math.max(left.count, right.count));
+        int min = left.min == null ? root.val : left.min, max = right.max == null ? root.val : right.max;
+        int count = left.count + right.count + 1;
+        return new TreeInfo(min, max, true, count);
+    }
+    
+    // 这里的min 和 max，代表 该Node所对应的子树，的最大最小值。父亲节点，如果该子树是左子树，必须大于max，如果是右子树，父亲val必须小于min
+    private class TreeInfo {
+        int count;
+        Integer min, max;
+        boolean isBST;
+        TreeInfo(Integer min, Integer max, boolean isBST, int count) {
+            this.min = min;
+            this.max = max;
+            this.isBST = isBST;
+            this.count = count;
+        }
+    }
+}
+
+// 没仔细看题目，题目说了node.val 有范围限制，所以可以把null换成 比范围更大更小的int值。
+// 注意，给最大最小范围，只适合从上到下，不适合从下到上。从小到上，没办法通过给一个范围，判断是否在范围内来检测BST
+class Solution {
+    
+    public int largestBSTSubtree(TreeNode root) {
+        return search(root).count;
+    }
+    
+    private TreeInfo search(TreeNode root) {
+        if (root == null) {
+            return new TreeInfo(10001, -10001, true, 0);
+        }
+        TreeInfo left = search(root.left), right = search(root.right);
+        if (!left.isBST || !right.isBST || left.max >= root.val || right.min <= root.val) 
+            return new TreeInfo(null, null, false, Math.max(left.count, right.count));
+        int min = Math.min(root.val, left.min), max = Math.max(root.val, right.max);
+        int count = left.count + right.count + 1;
+        return new TreeInfo(min, max, true, count);
+    }
+    
+    private class TreeInfo {
+        int count;
+        Integer min, max;
+        boolean isBST;
+        TreeInfo(Integer min, Integer max, boolean isBST, int count) {
+            this.min = min;
+            this.max = max;
+            this.isBST = isBST;
+            this.count = count;
+        }
+    }
+}
+
+// 判断是BST，比上面判断不是，要显得更简单。特别注意min和max的含义。这是从下而上的判断，跟从上而下不一样。
+class Solution {
+    public int largestBSTSubtree(TreeNode root) {
+        return search(root).count;
+    }
+    
+    private TreeInfo search(TreeNode root) {
+        if (root == null) return new TreeInfo(0, 10001, -10001, true);
+        TreeInfo left = search(root.left), right = search(root.right);
+        if (left.isBST && right.isBST && root.val > left.max && root.val < right.min) {
+            // 要特别注意这里min和max的含义，越往上，范围越缩小
+            return new TreeInfo(left.count + right.count + 1, Math.min(root.val, left.min), Math.max(root.val, right.max), true);
+        }
+        return new TreeInfo(Math.max(left.count, right.count), 0, 0, false);
+    }
+    
+    private class TreeInfo {
+        int count;
+        int min, max;
+        boolean isBST;
+        TreeInfo(int count, int min, int max, boolean isBST) {
+            this.count = count;
+            this.min = min;
+            this.max = max;
+            this.isBST = isBST;
+        }
+    }
+}
+
+// 一种很复杂的写法，进入search方法的一定不是null，省略了handle null的情况，但是却让逻辑异常复杂。尽量不要这样写代码。
+class Solution {
+    
+    public int largestBSTSubtree(TreeNode root) {
+        if (root == null) return 0;
+        return search(root).count;
+    }
+    
+    private TreeInfo search(TreeNode root) {
+        if (root.left == null && root.right == null) {
+            return new TreeInfo(root.val, root.val, true, 1);
+        } else if (root.right == null) {
+            TreeInfo left = search(root.left);
+            if (!left.isBST || root.val <= left.max) {
+                return new TreeInfo(0, 0, false, left.count);
+            } else {
+                return new TreeInfo(left.min, root.val, true, left.count + 1);
+            }
+        } else if (root.left == null) {
+            TreeInfo right = search(root.right);
+            if (!right.isBST || root.val >= right.min) {
+                return new TreeInfo(0, 0, false, right.count);
+            } else {
+                return new TreeInfo(root.val, right.max, true, right.count + 1);
+            }
+        } else {
+        // 这里几乎是抄上面的代码，少了对left.min, right.max是null或者是默认初始值的判断，但是多了上面两个else if
+            TreeInfo left = search(root.left), right = search(root.right);
+            if (!left.isBST || !right.isBST || left.max >= root.val || right.min <= root.val) 
+                return new TreeInfo(0, 0, false, Math.max(left.count, right.count));
+            int count = left.count + right.count + 1;
+            return new TreeInfo(left.min, right.max, true, count);
+        }
+    }
+    
+    private class TreeInfo {
+        int count;
+        int min, max;
+        boolean isBST;
+        TreeInfo(int min, int max, boolean isBST, int count) {
+            this.min = min;
+            this.max = max;
+            this.isBST = isBST;
+            this.count = count;
+        }
+    }
+}
+
+
+// 想要从上到下，是错误的。举个例子， [2, 3, null, 1]。 其实子树3-1是符合要求的，但是因为从上到下，在点3的时候，min是负无穷，但是max是2，会判断错误，认为不符合条件。所以只能从下往上。
+class Solution {
+    public int largestBSTSubtree(TreeNode root) {
+        if (root == null) return 0;
+        return Math.max(1, search(root, Integer.MIN_VALUE, Integer.MAX_VALUE).count);
+    }
+    
+    private TreeInfo search(TreeNode root, int min, int max) {
+        if (root == null) return new TreeInfo(0, true);
+        TreeInfo left = search(root.left, min, root.val), right = search(root.right, root.val, max);
+        if (left.isBST && right.isBST && root.val > min && root.val < max) return new TreeInfo(left.count + right.count + 1, true);
+        // 这里不能return left 或者 right，因为 只有left和right有可能是BST，isBST会返回true，但是到这一行，必须返回isBST false
+        int count = Math.max(left.count, right.count);
+        return new TreeInfo(count, false);
+    }
+    
+    private class TreeInfo {
+        int count;
+        boolean isBST;
+        TreeInfo(int count, boolean isBST) {
+            this.count = count;
+            this.isBST = isBST;
+        }
+    }
+}

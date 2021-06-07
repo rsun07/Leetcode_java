@@ -1,0 +1,232 @@
+// 解法1： 直接用pre order
+// 需要注意的就是，如何判断，左子树的结束，如何避免不把右子树的node接到左子树上面去？用null就可以。只要你把leaf node，或者是有一个子树是null的情况的node的那个null的node也写到 serialize的String里面，就是停下的信号。
+
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+public class Codec {
+
+    private static final String SEPARATOR = ",";
+    
+    // Encodes a tree to a single string.
+    public String serialize(TreeNode root) {
+        if (root == null) {
+            return " ";
+        }
+        // handle root separately to handle separator is one less than number of node issue
+        StringBuilder sb = new StringBuilder(String.valueOf(root.val));
+        serialize(root.left, sb);
+        serialize(root.right, sb);
+        return sb.toString();
+    }
+    
+    private void serialize(TreeNode root, StringBuilder sb) {
+        sb.append(SEPARATOR);
+        if (root == null) {
+            sb.append(" ");
+            return;
+        }
+        sb.append(root.val);
+        serialize(root.left, sb);
+        serialize(root.right, sb);
+    }
+
+    // Decodes your encoded data to tree.
+    public TreeNode deserialize(String data) {
+        String[] nodes = data.split(SEPARATOR);
+        // use linked list to avoid maintain a global index i
+        LinkedList<String> nodeList = new LinkedList<>(Arrays.asList(nodes));
+        return deserialize(nodeList);
+    }
+    
+    private TreeNode deserialize(LinkedList<String> nodes) {
+        if (nodes.isEmpty()) {
+            return null;
+        }
+        String node = nodes.removeFirst();
+        if (" ".equals(node)) {
+            return null;
+        }
+        TreeNode root = new TreeNode(Integer.parseInt(node));
+        root.left = deserialize(nodes);
+        root.right = deserialize(nodes);
+        return root;
+    }
+}
+
+// Your Codec object will be instantiated and called as such:
+// Codec ser = new Codec();
+// Codec deser = new Codec();
+// TreeNode ans = deser.deserialize(ser.serialize(root));
+
+
+
+
+// 下面这个解法是受到了 “105. Construct Binary Tree from Preorder and Inorder Traversal” 的启发
+// 有inorder traversal的结果，知道左右子树的count，就可以恢复一棵树。
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+public class Codec {
+
+    private static final String INNER_SEPARATOR = ",";
+    private static final String SEPARATOR = ";";
+    
+    // Encodes a tree to a single string.
+    public String serialize(TreeNode root) {
+        List<NodeInfo> list = new ArrayList<>();
+        serialize(root, list);
+        if (list.size() == 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(list.get(0).toString());
+        for (int i = 1; i < list.size(); i++) {
+            sb.append(SEPARATOR);
+            sb.append(list.get(i).toString());
+        }
+        return sb.toString();
+    }
+    
+    private int serialize(TreeNode root, List<NodeInfo> list) {
+        if (root == null) {
+            return 0;
+        }
+        NodeInfo nodeInfo = new NodeInfo(root.val);
+        list.add(nodeInfo);
+        int leftCount = serialize(root.left, list);
+        int rightCount = serialize(root.right, list);
+        // 这里很巧妙的用了一点，nodeInfo是一个引用，list里面也是一个引用，这里先加入到list里，占据位置，然后利用引用更改left和right 的count。解决了count要遍历完子树才有，但是位置要提前确定这一矛盾
+        nodeInfo.leftCount = leftCount;
+        nodeInfo.rightCount = rightCount;
+        return leftCount + rightCount + 1;
+    }
+
+    // Decodes your encoded data to tree.
+    
+    private int nodesIndex = 0;
+    
+    public TreeNode deserialize(String data) {
+        String[] nodes = data.split(SEPARATOR);
+        return deserialize(nodes, 1);
+    }
+    
+    private TreeNode deserialize(String[] nodes, int count) {
+        if (count == 0) {
+            return null;
+        }
+        String node = nodes[nodesIndex++];
+        if ("".equals(node)) {
+            return null;
+        }
+        String[] nodeInfo = node.split(INNER_SEPARATOR);
+        TreeNode root = new TreeNode(Integer.parseInt(nodeInfo[0]));
+        root.left = deserialize(nodes, Integer.parseInt(nodeInfo[1]));
+        root.right = deserialize(nodes, Integer.parseInt(nodeInfo[2]));
+        return root;
+    }
+}
+
+class NodeInfo {
+    private static final String INNER_SEPARATOR = ",";
+    
+    int val;
+    int leftCount;
+    int rightCount;
+    
+    public NodeInfo(int val) {
+        this.val = val;
+    }
+    
+    @Override
+    public String toString() {
+        return val + INNER_SEPARATOR + leftCount + INNER_SEPARATOR + rightCount;
+    }
+}
+
+// Your Codec object will be instantiated and called as such:
+// Codec ser = new Codec();
+// Codec deser = new Codec();
+// TreeNode ans = deser.deserialize(ser.serialize(root));
+
+
+
+
+// 这个其实是leetcode自己内部用的。level order的办法。同样的，每一层，从左到右。null也要写进去。
+// 我原来以为，如果要null，会造成大量的null，浪费空间，其实是想多了。比如一层已经结束了，只需要一层null就行了，下一层不用管了。看下面的例子. 这里第3层放[null, null, 4,5]。第4层放[6, null, null, 7] 就行了。第四层已经不需要管2下面的了，因为deserialize的时候，我们只会把上一层非空的node放到这边来接children。
+
+/*
+
+          1
+         / \
+        2   3
+           / \     
+          4   5    
+         /     \
+        6       7
+
+*/
+
+public class Codec {
+
+    private static final String LEVEL_SEPARATOR = ";", NODE_SEPARATOR = ",";
+    
+    // Encodes a tree to a single string.
+    public String serialize(TreeNode root) {
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        StringBuilder sb = new StringBuilder();
+        while (!queue.isEmpty()) {
+            int levelSize = queue.size();
+            for (int i = 0; i < levelSize; i++) {
+                TreeNode node = queue.poll();
+                if (node == null) {
+                    sb.append("null");
+                } else {
+                    sb.append(node.val);
+                    queue.offer(node.left);
+                    queue.offer(node.right);
+                }
+                if (i != levelSize - 1) sb.append(NODE_SEPARATOR);
+            }
+            if (!queue.isEmpty()) sb.append(LEVEL_SEPARATOR);
+        }
+        return sb.toString();
+    }
+
+    // Decodes your encoded data to tree.
+    public TreeNode deserialize(String data) {
+        String[] levels = data.split(LEVEL_SEPARATOR);
+        TreeNode root = getNode(levels[0]);
+        Queue<TreeNode> queue = new LinkedList<>();
+        if (root != null) queue.offer(root);
+        for (int i = 1; i < levels.length; i++) {
+            String[] nodes = levels[i].split(NODE_SEPARATOR);
+            for (int j = 0; j < nodes.length - 1; j += 2) {
+                TreeNode parent = queue.poll();
+                parent.left = getNode(nodes[j]);
+                parent.right = getNode(nodes[j+1]);
+                if (parent.left != null) queue.offer(parent.left);
+                if (parent.right != null) queue.offer(parent.right);
+            }
+        }
+        return root;
+    }
+    
+    private TreeNode getNode(String node) {
+        if ("null".equals(node)) return null;
+        return new TreeNode(Integer.parseInt(node));
+    }
+}
+

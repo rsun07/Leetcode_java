@@ -1,0 +1,195 @@
+/*
+三种方法解题。
+1. 最容易想到的方法，先merge list 1和2，把3merge进已经merge好的list，以此类推，把4，5，6... merge进去
+2. 把1和n-1 merge，把2和n-2 merge ..., 然后merge 1和 n/2，2和 n/2-1 这样，直到只剩下一个list为止。要注意当n是奇数的时候，不要丢掉某一个list
+3. 第一次自己想不到，看答案后才知道的经典方法。搞一个min heap，把1-n的第一个node都放进去，然后从node里面取最小的，取出后再把改被取出的node的next放进去。我第一次看到这种解法，很不理解，认为只能比较所有list的第一个node，如何比较list_1的第二个node一定比list_2的第一个node。原来是忽视了题目给出的一个条件，就是每一个单独的list，都是sorted了。所以如果第一次pick了list_1的head，然后把list_1的第二个node加进去，第二个node肯定小于第一个，之后的排序就交给heap了
+
+官方题解中还给出了两种方法。
+一种是类似3，但是不用heap，每次都遍历k个list的第一个element，选出最小的。
+另一种则是把所有的元素都放到一个ArrayList里面，然后sort。时间复杂度是 O(knlogkn)，空间复杂度是O(kn)
+
+时间复杂度分析。
+假设一共是k个list，每个list的长度的n。
+
+1. 2n + 3n + 4n + ... + k*n = O(k^2 * n). 
+	Space is constant, no extra space
+2. 2n*(k/2) + 4n*(k/4) + ... (k*n)*(2) = O(n * klogk)
+	Space is constant, no extra space
+3. heap insert is logk, need insert nk times (total number of elements). O(n * klogk)
+	Space is O(k) for the heap
+
+*/
+
+// 解法1：
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode mergeKLists(ListNode[] lists) {
+        if (lists == null || lists.length == 0) {
+            return null;
+        }
+        ListNode dummyHead = new ListNode(), head = lists[0];
+        // in case list size is only 1
+        dummyHead.next = head;
+        for (int i = 1; i < lists.length; i++) {
+            dummyHead.next = mergeTwoLists(head, lists[i]);
+            head = dummyHead.next;
+        }
+        return dummyHead.next;
+    }
+    
+    private ListNode mergeTwoLists(ListNode head1, ListNode head2) {
+        if (head1 == null) {
+            return head2;
+        }
+        if (head2 == null) {
+            return head1;
+        }
+        ListNode dummyHead = new ListNode(), head = dummyHead;
+        while (head1 != null && head2 != null) {
+            if (head1.val < head2.val) {
+                head.next = head1;
+                head1 = head1.next;
+            } else {
+                head.next = head2;
+                head2 = head2.next;
+            }
+            head = head.next;
+        }
+        // different than merge two arrays, for list, attach the head will auto attach rest parts
+        if (head1 != null) {
+            head.next = head1;
+        } else {
+            head.next = head2;
+        }
+        return dummyHead.next;
+    }
+}
+
+
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+
+/*
+make sure it works as expected, assume hi = 10 initially
+1. hi = 10, nextHi = 5, i in range 0 to 4
+   merge(0, 10), merge(1,9), merge(2,8), merge(3,7), merge(4,6) quit, leave 5 not merged
+  set hi to 5
+2. hi = 5, nextHi = 3, i in range 0, 1, 2
+    merge (0,5), merge(1,4), merge(2,3), left is 0, 1, 2
+3. hi = 3, nextHi = 2, i in range 0, 1
+    merge (0,3), merge(1,2)/ Wrong!!! should merge 0 and 2, leave 1 there
+4. hi = 2, nextHi = 1, i only 0
+    merge(0, 2)
+5. hi = 1, next hi 1, i only 0
+    merge(0, 1)
+    
+    
+assume size = 4, hi = 3
+1. hi = 3, nextHi = 2, i in range 0 to 1
+    merge(0,3), merge(1,2)
+2. hi = 2, nextHi = 1, i only 0
+    merge(0, 2) // Wrong!!! Should merge (0,1) only!!! 2 already merged to 1, so the next step will cause loop
+3. hi = 1, nextHi = 1, i only 0
+    merge(0,1)
+
+之前写的是
+            if (hi == 1) {
+                hi = 0;
+            } else {
+                hi = hi % 2 == 0 ? hi/2 : hi/2+1;
+            }
+没必要那么复杂，只需要 hi = hi/2 就行了
+
+*/
+class Solution {
+    public ListNode mergeKLists(ListNode[] lists) {
+        if (lists == null || lists.length == 0) {
+            return null;
+        }
+        int hi = lists.length - 1;
+        while (hi > 0) {
+            // hi = 1, nextHi = 1
+            for (int i = 0; i < hi - i; i++) {
+                lists[i] = mergeTwoLists(lists[i], lists[hi-i]);
+            }
+            hi = hi/2;
+        }
+        return lists[0];
+    }
+    
+    private ListNode mergeTwoLists(ListNode head1, ListNode head2) {
+        if (head1 == null) {
+            return head2;
+        }
+        if (head2 == null) {
+            return head1;
+        }
+        if (head1 == head2) {
+            return head1;
+        }
+        ListNode dummyHead = new ListNode(), head = dummyHead;
+        while (head1 != null && head2 != null) {
+            if (head1.val < head2.val) {
+                head.next = head1;
+                head1 = head1.next;
+            } else {
+                head.next = head2;
+                head2 = head2.next;
+            }
+            head = head.next;
+        }
+        // different than merge two arrays, for list, attach the head will auto attach rest parts
+        if (head1 != null) {
+            head.next = head1;
+        } else {
+            head.next = head2;
+        }
+        return dummyHead.next;
+    }
+}
+
+
+class Solution {
+    public ListNode mergeKLists(ListNode[] lists) {
+        if (lists == null || lists.length == 0) {
+            return null;
+        }
+        // Java heap, by default is min heap, head is the least value. Doesn't support null value
+        PriorityQueue<ListNode> minHeap = new PriorityQueue<>(lists.length, (node1, node2) -> Integer.compare(node1.val, node2.val));
+        for(ListNode node : lists) {
+            if (node != null) {
+                minHeap.offer(node);
+            }
+        }
+        ListNode dummyHead = new ListNode(), head = dummyHead;
+        while (!minHeap.isEmpty()) {
+            ListNode next = minHeap.poll();
+            if (next.next != null) {
+                minHeap.offer(next.next);
+            }
+            head.next = next;
+            head = head.next;
+        }
+        return dummyHead.next;
+    }
+}
+
+
+
