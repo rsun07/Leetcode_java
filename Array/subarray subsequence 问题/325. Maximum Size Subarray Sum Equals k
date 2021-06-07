@@ -1,0 +1,101 @@
+/*
+Given an array nums and a target value k, find the maximum length of a subarray that sums to k. If there isn't one, return 0 instead.
+
+Note:
+The sum of the entire nums array is guaranteed to fit within the 32-bit signed integer range.
+
+Example 1:
+
+Input: nums = [1, -1, 5, -2, 3], k = 3
+Output: 4 
+Explanation: The subarray [1, -1, 5, -2] sums to 3 and is the longest.
+Example 2:
+
+Input: nums = [-2, -1, 2, 1], k = 1
+Output: 2 
+Explanation: The subarray [-1, 2] sums to 1 and is the longest.
+Follow Up:
+Can you do it in O(n) time?
+*/
+
+// 收费题， 这一题跟209. Minimum Size Subarray Sum 有点类似，但是其实又很不一样。那一题只要求大于s，这一题要求刚好等于k。
+
+// Brute Force相对于我的水平来说，6%的时间，毕竟是n^2。
+class Solution {
+    public int maxSubArrayLen(int[] nums, int k) {
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+        for (int i = nums.length; i >= 1; i--) {
+            int sum = 0;
+            for (int j = 0; j < i-1; j++) {
+                sum += nums[j];
+            }
+            for (int j = i-1; j < nums.length; j++) {
+                sum += nums[j];
+                if (sum == k) {
+                    return i;
+                }
+                sum -= nums[j-i+1];
+            }
+        }
+        return 0;
+    }
+}
+
+
+// 降维时间复杂度的关键在于，如何知道Sum(i,j), i<j. 也就是 从nums[i] 到 nums[j] 所有数字的和是多少？ 其实另一道题目做过的，有过类似的解法，就是Sum(j) - Sum(i). Sum(i) 表示从0到i的和。
+
+class Solution {
+    public int maxSubArrayLen(int[] nums, int k) {
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+        Map<Integer, Integer> sumToIndex = new HashMap<>();
+        int N = nums.length, sum = 0, maxLen = 0;
+        for (int i = 0; i < N; i++) {
+            sum += nums[i];
+            if (k == sum) {
+                maxLen = i + 1;
+            }
+            // it's ok to override the previous value. Because we need the max len, we always want to store the largest index
+            sumToIndex.put(sum, i);
+        }
+        for (int i = 0; i < N && maxLen < N - 1 - i; i++) {
+            // 这里有一点省略，其实应该累计一个sum，或者上面的for循环用一个数组存下来，下面应该用k + sum
+            k += nums[i];
+            if (sumToIndex.containsKey(k)) {
+                maxLen = Math.max(maxLen, sumToIndex.get(k) - i);
+            }
+        }
+        return maxLen;
+    }
+}
+
+// 更加标准的prefix sum解法。
+class Solution {
+    public int maxSubArrayLen(int[] nums, int k) {
+        if (nums == null || nums.length == 0) return 0;
+        int[] prefixSums = new int[nums.length];
+        prefixSums[0] = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            prefixSums[i] = prefixSums[i-1] + nums[i];
+        }
+        // sum to earliest index
+        Map<Integer, Integer> sumToIndex = new HashMap<>();
+        sumToIndex.put(0, -1);
+        int maxLen = 0;
+        for (int i = 0; i < nums.length; i++) {
+            if (sumToIndex.containsKey(prefixSums[i] - k)) {
+                int len = i - sumToIndex.get(prefixSums[i] - k);
+                maxLen = Math.max(maxLen, len);
+            }
+
+            // 这个点特别容易错，我在其他题目也错过。这里不能写成上面的else if，否则会漏掉。因为即使 上面的if成立，下面的也要做，如果是else if，则上面的if true的情况下， 就不会执行了，要特别注意。
+            if (!sumToIndex.containsKey(prefixSums[i])) {
+                sumToIndex.put(prefixSums[i], i);
+            }
+        }
+        return maxLen;
+    }
+}

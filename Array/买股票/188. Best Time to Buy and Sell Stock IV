@@ -1,0 +1,155 @@
+// 解法1：错误的解法，无疾而终。
+// 我想避免n^3的解法，所以借鉴了股票III里的概念，可惜，因为从一个开始，对DP的理解和定义就有问题，DP的传递条件也不合理。最终导致了DP的错乱。
+class Solution {
+    public int maxProfit(int k, int[] prices) {
+        if (prices == null || prices.length < 2) {
+            return 0;
+        }
+        int N = prices.length;
+        k = Math.min(k, N/2);
+        // right[i] means, buy at i or any j > i, sell at k > j, one transaction, max profit
+        int[] right = new int[N];
+        int max = prices[N-1], maxProfit = 0;
+        for (int i = N-2; i >= 0; i--) {
+            right[i] = Math.max(right[i+1], max - prices[i]);
+            maxProfit = Math.max(maxProfit, right[i]);
+            max = Math.max(max, right[i]);
+        }
+        // array for DP. pre and cur is the simplified version for a metrix
+        int[] pre = new int[N], cur = new int[N];
+        // when only do one transaction
+        int min = prices[0];
+        for (int i = 1; i < N; i++) {
+            pre[i] = Math.max(pre[i-1], prices[i] - min);
+            min = Math.min(min, prices[i]);
+        }
+        
+        // i means how many transaction
+        for (int i = 2; i <= k; i++) {
+            // j means days
+            for (int j = 1; j < N; j++) {
+                // cur[j-1] >= 0, right[j+1] >= 0, pre[j] >= 0
+                // cur[j] 的含义是，在j天以前(不包括j)做i-1次交易，在j天以后(包括j)做第二次交易
+                cur[j] = Math.max(pre[j-1] + right[j], pre[j]);
+                maxProfit = Math.max(maxProfit, cur[j]);
+            }
+            pre = cur;
+            cur = new int[N];
+            System.out.println(Arrays.toString(pre));
+        }
+        return pre[N-1];
+    }
+}
+
+// 解法2，接近但是还是错误
+class Solution {
+    public int maxProfit(int k, int[] prices) {
+        if (prices == null || prices.length < 2) {
+            return 0;
+        }
+        int N = prices.length;
+        // Downgrade to trade anytime issue
+        if (k >= N/2) {
+            int profit = 0;
+            for (int i = 1; i < N; i++) {
+                profit += prices[i] > prices[i-1] ? prices[i] - prices[i-1] : 0;
+            }
+            return profit;
+        }
+        int[] pre = new int[N], cur = new int[N];
+        int min = prices[0];
+        for (int j = 1; j < N; j++) {
+            pre[j] = Math.max(pre[j-1], prices[j] - min);
+            min = Math.min(min, prices[j]);
+        }
+        
+        for (int i = 2; i <= k; i++) {
+            for (int j = 1; j < N; j++) {
+                for (int l = 1; l < j; l++) {
+                    // 错误在这一行，这里要的是，从l到j做一次交易，让利润最大，但是不一定是prices[j] - prices[l]
+                    // 这就是为什么我一开始觉得这是三维的DP，因为需要知道任意两个i<j，做一次交易最大的利润。
+                    cur[j] = Math.max(cur[j], pre[l-1] + prices[j] - prices[l]);
+                }
+                cur[j] = Math.max(cur[j], pre[j]);
+            }
+            pre = cur;
+            cur = new int[N];
+        }
+        return pre[N-1];
+    }
+}
+
+// 改了一下，写出了一个n^4的解法，超时了
+class Solution {
+    public int maxProfit(int k, int[] prices) {
+        if (prices == null || prices.length < 2) {
+            return 0;
+        }
+        int N = prices.length;
+        // Downgrade to trade anytime issue
+        if (k >= N/2) {
+            int profit = 0;
+            for (int i = 1; i < N; i++) {
+                profit += prices[i] > prices[i-1] ? prices[i] - prices[i-1] : 0;
+            }
+            return profit;
+        }
+        int[] pre = new int[N], cur = new int[N];
+        
+        for (int i = 1; i <= k; i++) {
+            for (int j = 1; j < N; j++) {
+                for (int l = 0; l < j; l++) {
+                    int localMin = prices[l], localMax = 0;
+                    for (int p = l+1; p <= j; p++) {
+                        localMax = Math.max(prices[p] - localMin, localMax);
+                        localMin = Math.min(prices[p], localMin);
+                    }
+                    if (l >= 1) {
+                        localMax += pre[l-1];
+                    }
+                    cur[j] = Math.max(cur[j], localMax);
+                }
+                cur[j] = Math.max(cur[j], pre[j]);
+            }
+            pre = cur;
+            cur = new int[N];
+        }
+        return pre[N-1];
+    }
+}
+
+
+// 优化的解法，去掉了找交易点l和k的两个for
+// 还是有一点没弄明白，就是pre 和 cur的联系。可能让做5次交易，但是4次其实就已经是最大值了。这里肯定是包括了这种情况，但是不直观
+// 仔细想了一下，其实可以加上一个判断cur[j]和pre[j]，如果pre[j]更大，则赋值给cur[j]。但是，这里其实是冗余的。看几个例子就知道了，比如[1,2,3,4,5,6], 不管i等于几，结果都会是一样的。或者【3，2，1，4，5】也是一样的，都只会交易一次，因为我不管cur[2]交易了几次，0次，1次，2次，与我无关，我只管最大值，然后再加上后一次trade的最大值。这里的cur[j]，不再仅仅是交易j次的最大，而是说交易1，2，3，4...j 次最大值
+class Solution {
+    public int maxProfit(int k, int[] prices) {
+        if (prices == null || prices.length < 2) {
+            return 0;
+        }
+        int N = prices.length;
+        // Downgrade to trade anytime issue
+        if (k >= N/2) {
+            int profit = 0;
+            for (int i = 1; i < N; i++) {
+                profit += prices[i] > prices[i-1] ? prices[i] - prices[i-1] : 0;
+            }
+            return profit;
+        }
+        int[] pre = new int[N], cur = new int[N];
+        for (int i = 1; i <= k; i++) {
+            // 买股票，买的时候需要付出本金，卖的时候把本金和利润一并收回来。
+            // cur[j] 表示，在只有j天的情况下，做i次交易，最大的利润。最原始的解法，是需要遍历0 to j-1, 寻找买点。而实际上，最划算的买点就是当pre[j]-prices[j]最大的那个点。
+            // 不管0 to j-1的哪一个点买入，卖出的时候，都是current Balance 加上卖出价格yejius price[l] l > j. 所以找买入时候，令current Balance最大的点，则是买点
+            int curBalance = pre[0] - prices[0];
+            for (int j = 1; j < N; j++) {
+                // cur[j-1] means do nothing today, sell at previous days. 
+                cur[j] = Math.max(cur[j-1], curBalance + prices[j]);
+                curBalance = Math.max(curBalance, pre[j] - prices[j]);
+            }
+            pre = cur;
+            cur = new int[N];
+        }
+        return pre[N-1];
+    }
+}

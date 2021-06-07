@@ -1,0 +1,31 @@
+// 思路不是很好想的，我一开始没想清楚。
+// 从左边从右边分别找两个单调递增的区间，然后看两个如何合并在一起。
+
+// 如何合并，我想了很久，比如[1,2,3]和[1,1,2,2,2,2,3,3,3],也可以是左右颠倒[1,1,2,2,2,2,3,3,3]和[1,2,3]。
+// 我曾想过用二分查找，找左边的最大在右边排第几，拼接起来。或者找右边的最小在左边排名第几，然后拼接。但是有重复元素的二分查找，不容易写，要现场写，就是另一道20分钟的题目了。这个想法应该是不work的。最后不一定是左边中间接右边最小或者左边最大接右边中间。binary search没办法找到左边中间接右边中间的情况。比如[1,2,2,2,2,2,2,2,2,3]和[1,2,2,2,2,2,2,3]。 这种左边舍弃最后的3，右边舍弃最前面的1。
+// 动态的找，就是下面的这个方法，左边的如果比右边的小，就移动左边的指针，直到不比右边的小，移动右边，然后看左边又能移动多少个。
+
+class Solution {
+    public int findLengthOfShortestSubarray(int[] arr) {
+        int left = 0;
+        // left stop at the last incre digit
+        while (left < arr.length - 1 && arr[left] <= arr[left+1]) {left++;}
+        if (left == arr.length - 1) return 0;
+        int right = arr.length - 1;
+        // right stop at the first valid digit
+        while (right > left && arr[right] >= arr[right-1]) {right--;}
+        
+        int maxLen = Math.max(left + 1, arr.length - right);
+        int lo = 0, hi = right;
+        while (lo <= left && hi < arr.length) {
+            if (arr[lo] <= arr[hi]) {
+                lo++;
+                maxLen = Math.max(maxLen, lo + arr.length - hi);
+            } else {
+                hi++;
+            }
+        }
+        return arr.length - maxLen;
+    }
+}
+

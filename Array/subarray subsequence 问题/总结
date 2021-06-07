@@ -1,0 +1,18 @@
+53  Maximum Subarray 求和
+152. Maximum Product Subarray 求积
+
+brute force都是，把所有的subarray都找出来，那要n平方
+
+一遍过的方法，思路就是，要么取前面的极值加上或者乘以当前nums[i]，要么就只取当前nums[i] only
+
+找所有sub array的方法有两个。一个是确定size，size是1的时候，2的时候，3的时候。
+还有一个是，DP的办法，假设只有一个元素，假设有两个元素，假设有三个元素，一个一个加
+
+
+还有一个重要的手段，就是利用prefixSum，或者prefixProduct，来找Subarray。
+比如，560. Subarray Sum Equals K
+算一遍prefixSum，然后就类似two sum的解法，找配对的。要注意分清楚，这里是用后面的prefixSum减去前面的，等于target。
+
+
+这一点在做prefix sum的时候要特别注意，要put一个（0，-1）类似这样的在map里，或者单独check如果prefixSum自己符合条件的情况。
+就是如果不加这一点，永远是考察Sum(i, j)，i < j. 会错过Sum(j)本身符合条件的情况。

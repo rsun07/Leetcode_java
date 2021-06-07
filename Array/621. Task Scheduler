@@ -1,0 +1,98 @@
+// 非常容易错。
+// 我的想法是，最多的task决定了长短，中间的task就是去填中间的坑。但是要注意有可能有两种情景
+
+// AAABBBCCDDEEFFGGHH
+// ABCDEFGHABCDEFGHAB
+// AAAAAAAAAAAAABCDEFG
+// ABCADEAFGA  A  A  A
+
+// 错在哪里，错在，如果count是这样分布的[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,88,89,91,95,96,100,103,108,110,112]，n=8. 这时候，最后一个88，永远都得不到减。到后面，会出现不够填坑的情景，因为到后面，已经很不平衡了，比如[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,87,0,1,5,6,10,13,18,20,22]， 才开始启用这个88的来填坑，但是每次只能用一个填坑，以至于本来够填坑的，变成不够用。
+class Solution {
+    public int leastInterval(char[] tasks, int n) {
+        if(tasks == null || tasks.length == 0) {
+            return 0;
+        }
+        int[] counts = new int[26];
+        for (char task : tasks) {
+            counts[task-'A']++;
+        }
+        
+        Arrays.sort(counts);
+        
+        int units = tasks.length;
+        for (; counts[25] > 1; counts[25]--) {
+            int fill = 0;
+            for (int task = 24; task >= 0 && fill < n; task--) {
+                if (counts[task] > 0) {
+                    counts[task]--;
+                    fill++;
+                }
+            } 
+            units += fill == n ? 0 : n - fill;
+            //         Arrays.sort(counts); 加上这一行，可以通过
+        }
+        return units;
+    }
+}
+
+// 其实上面这种，没必要这么复杂。用数学的办法做，不过也有错误。比如下面
+// ["A","A","A","B","B","B"], 2. 其中的B，只有两个可以用来填坑，而不是所有3个。
+
+class Solution {
+    public int leastInterval(char[] tasks, int n) {
+        if(tasks == null || tasks.length == 0) {
+            return 0;
+        }
+        int[] counts = new int[26];
+        for (char task : tasks) {
+            counts[task-'A']++;
+        }
+        
+        // index in counts
+        int maxTaskIndex = 0;
+        for (int i = 0; i < 26; i++) {
+            if (counts[i] > counts[maxTaskIndex]) {
+                maxTaskIndex = i;
+            }
+        }
+        
+        int totalCountExceptMax = tasks.length - counts[maxTaskIndex];
+        int idle = (counts[maxTaskIndex] - 1) * n - totalCountExceptMax;
+        return tasks.length + (idle > 0 ? idle : 0);
+    }
+}
+
+// 修整上面的错误
+class Solution {
+    public int leastInterval(char[] tasks, int n) {
+        if(tasks == null || tasks.length == 0) {
+            return 0;
+        }
+        int[] counts = new int[26];
+        for (char task : tasks) {
+            counts[task-'A']++;
+        }
+        
+        // index in counts
+        int maxTaskIndex = 0;
+        for (int i = 0; i < 26; i++) {
+            if (counts[i] > counts[maxTaskIndex]) {
+                maxTaskIndex = i;
+            }
+        }
+        
+        int idle = (counts[maxTaskIndex] - 1) * n;
+        for (int i = 0; i < 26 && idle > 0; i++) {
+            if (i != maxTaskIndex) {
+                idle -= Math.min(counts[maxTaskIndex] - 1, counts[i]);
+            }
+        }
+        
+        return tasks.length + (idle > 0 ? idle : 0);
+    }
+}
+
+
+
+
+

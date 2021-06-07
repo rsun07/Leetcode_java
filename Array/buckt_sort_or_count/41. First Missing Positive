@@ -1,0 +1,26 @@
+// 这一题，刚拿到，就可以想到用排序的办法。然后可以想到，用一个新的数组，如果发现了正整数，就放到对应index里面。然后过一遍新数组，就可以知道第一个缺失的正整数了。再仔细想，就可以想到不用新数组，本地swap的办法。
+// 本质上还是bucket sort，利用index来存value，而array的value用来存其他东西。有人叫这个cycle sort
+
+class Solution {
+    public int firstMissingPositive(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return 1;
+        }
+        for (int i = 0; i < nums.length; i++) {
+            int num = nums[i];
+            // 易错点，num有可能越界
+            if (num > 0 && num < nums.length && nums[num-1] != num) {
+                nums[i] = nums[num-1];
+                nums[num-1] = num;
+                // 另一个易错点
+                i--;
+            }
+        }
+        int i = 0;
+        while (i < nums.length && nums[i] == i+1) {
+            i++;
+        }
+        // 易错点2
+        return i+1;
+    }
+}

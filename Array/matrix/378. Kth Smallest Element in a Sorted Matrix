@@ -1,0 +1,117 @@
+// 不容易的一道题
+
+
+// 一开始我想了一种错误的解法，我误以为，对角线上的点，可以做为二分查找的中间点，然后事实并没有那么简单。注意下面两个例子
+/*
+7 比9小，7比3大。
+
+[1,3,9]
+[2,7,12]
+[3,8,14]
+
+
+下面这个例子4和8的关系，跟上面3和9完全相反。
+[1,3,4]
+[5,7,12]
+[8,11,14]
+*/
+
+// 错误的解法，仔细研究下面这个例子就可以发现，没那么简单，不可以这样简单的一个一个加入。而且我这里也没有用到visited
+/*
+
+[1,3,5]
+[6,7,12]
+[11,14,14]
+
+*/
+
+class Solution {
+    public int kthSmallest(int[][] matrix, int k) {
+        int n = matrix.length;
+        PriorityQueue<Node> minHeap = new PriorityQueue<>(k, (n1, n2) -> Integer.compare(n1.val, n2.val));
+        boolean[][] visited = new boolean[n][n];
+        minHeap.offer(new Node(0, 0, matrix[0][0]));
+        while (--k > 0) {
+            Node node = minHeap.poll();
+            if (node.row < n-1) minHeap.offer(new Node(node.row + 1, node.col, matrix[node.row+1][node.col]));
+            if (node.col < n-1) minHeap.offer(new Node(node.row, node.col + 1, matrix[node.row][node.col+1]));
+        }
+        return minHeap.poll().val;
+    }
+    
+    private class Node {
+        int row, col, val;
+        Node (int row, int col, int val) {
+            this.row = row;
+            this.col = col;
+            this.val = val;
+        }
+    }
+}
+
+// 正确的解法，确实是这样简单的每次加两个，但是需要考虑visited。时间复杂度分析，注意考虑k和n的相对大小，n*n的matrix，n不是所有元素的个数。
+// 时间复杂度应该是 X = min(n, k), X + KlogX (这是Leetcode的答案的解法)，我的解法应该就是KlogX
+class Solution {
+    public int kthSmallest(int[][] matrix, int k) {
+        int n = matrix.length;
+        PriorityQueue<Node> minHeap = new PriorityQueue<>(k, (n1, n2) -> Integer.compare(n1.val, n2.val));
+        boolean[][] visited = new boolean[n][n];
+        minHeap.offer(new Node(0, 0, matrix[0][0]));
+        while (--k > 0) {
+            Node node = minHeap.poll();
+            if (node.row < n-1 && !visited[node.row+1][node.col]) {
+                visited[node.row+1][node.col] = true;
+                minHeap.offer(new Node(node.row + 1, node.col, matrix[node.row+1][node.col]));
+            }
+            if (node.col < n-1 && !visited[node.row][node.col+1]) {
+                visited[node.row][node.col+1] = true;
+                minHeap.offer(new Node(node.row, node.col + 1, matrix[node.row][node.col+1]));
+            } 
+        }
+        return minHeap.poll().val;
+    }
+    
+    private class Node {
+        int row, col, val;
+        Node (int row, int col, int val) {
+            this.row = row;
+            this.col = col;
+            this.val = val;
+        }
+    }
+}
+
+// 我想加一个优化，但是其实是错误的。这样会漏加，因为加入的顺序并不一定是按照大小排序的。有可能更小的被更后面加入，只能保证出来的顺序是按照大小排序好的。
+/*
+
+[1,2,3,4,5],
+[6,7,8,9,10],
+[11,12,13,14,15],
+[16,17,18,19,20],
+[21,22,23,24,25]]
+
+找5大的。会先把7，8，9加进去，然后才加5。
+仔细思考，我的解法，heap的size可能不止是k？出来一个加2个进去？
+把minHeap.size() <= k 改成 minHeap.size() < 2*n是可以通过的。因为最多就是两行，不可能更多的在heap里面，就是横着的一行，竖着的一行。剩下的，肯定都比这些heap里面的元素更大。不过最好不要这样写，这样有可能造成，有一些被遗漏，等size更小了，又会再往里加。这个可以用来解释空间复杂度O(n)
+*/
+        while (--k > 0) {
+            Node node = minHeap.poll();
+            // 优化，不再往里加了
+            if (minHeap.size() <= k) {
+                if (node.row < n-1 && !visited[node.row+1][node.col]) {
+                    visited[node.row+1][node.col] = true;
+                    minHeap.offer(new Node(node.row + 1, node.col, matrix[node.row+1][node.col]));
+                }
+                if (node.col < n-1 && !visited[node.row][node.col+1]) {
+                    visited[node.row][node.col+1] = true;
+                    minHeap.offer(new Node(node.row, node.col + 1, matrix[node.row][node.col+1]));
+                } 
+            }
+        }
+
+
+// Leetcode的解法就是类似merge k sorted list的解法。
+// 我觉得我的解法更好，因为下面这个解法，没有利用好每一列从上到下也是排序好了的这一个特性。如果面试官质疑我的解法，最有力的证据就是，我的解法，每一次出来的，一定是最小的元素。
+
+// 还有一种非常复杂的Binary Search的方法。而且是非主流的Binary Search。是根据最小和最大值，求中间的值，看，如果中间值在matrix里面，左边有几个元素，右边有几个元素，根据这个来做Binary Search。每一次还是需要遍历整个大半个Matrix来数数，看如果中间值在matrix里面，会排在第几。
+

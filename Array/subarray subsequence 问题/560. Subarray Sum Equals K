@@ -1,0 +1,98 @@
+// 这种问题，第一个想到就是用prefix sum
+
+class Solution {
+    public int subarraySum(int[] nums, int k) {
+        if (nums == null || nums.length == 0) return 0;
+        int[] prefixSums = new int[nums.length];
+        int pre = 0;
+        for (int i = 0; i < nums.length; i++) {
+            prefixSums[i] = pre + nums[i];
+            pre = prefixSums[i];
+        }
+        Map<Integer, Integer> sumToCount = new HashMap<>();
+        int count = 0;
+        for (int prefixSum : prefixSums) {
+            if (prefixSum == k) count++;
+            count += sumToCount.getOrDefault(prefixSum - k, 0);
+            sumToCount.put(prefixSum, sumToCount.getOrDefault(prefixSum, 0) + 1);
+        }
+        return count;
+    }
+}
+
+// 也可以用 DP的方法遍历所有sub array，就是会很慢，多加几个test case就要超时。
+class Solution {
+    public int subarraySum(int[] nums, int k) {
+        if (nums == null || nums.length == 0) return 0;
+        int count = 0;
+        int[] preLenSum = new int[nums.length];
+        for (int len = 1; len <= nums.length; len++) {
+            int[] curLenSum = new int[nums.length];
+            // 这里要注意，i的含义，i是目前len的subarray的最后一个index，所以这里i可以取到nums.length-1. 而不是nums.length - len
+            for (int i = len-1; i < nums.length; i++) {
+                int sum = nums[i] + (i > 0 ? preLenSum[i-1] : 0);
+                if (sum == k) count++;
+                curLenSum[i] = sum;
+            }
+            // 这个要记住了。不要漏掉了
+            preLenSum = curLenSum;
+        }
+        return count;
+    }
+}
+
+// 下面这种方法，只用一个一位数组做dp
+class Solution {
+    public int subarraySum(int[] nums, int k) {
+        int count = 0;
+        // subarraySum[i] means for length len-1, the sum of subarray ending at index i
+        int[] subarraySum = new int[nums.length];
+        // subarray size = 1
+        for (int i = 0; i < nums.length; i++) {
+            if (nums[i] == k) count++;
+            subarraySum[i] = nums[i];
+        }
+        
+        for (int len = 2; len <= nums.length; len++) {
+            // 这里有点奇怪，len-2，容易错
+            int pre = subarraySum[len-2];
+            for (int i = len-1; i < nums.length; i++) {
+                int sum = nums[i] + pre;
+                if (sum == k) count++;
+                pre = subarraySum[i];
+                subarraySum[i] = sum;
+            }
+        }
+        return count;
+    }
+}
+
+// 这道题，因为nums可以有负数，没办法用双指针。双指针原则上就是一种贪婪算法，必须要全是正数的时候，有合适的扩张条件才能使用。 这个题目还需要考虑这种情况，[-1,-1,1], 还有k=0的时候要特殊处理。下面的代码可以通过29个test case，应该都是正数的，有负数这样的情况就很难办了。
+
+class Solution {
+    public int subarraySum(int[] nums, int k) {
+        if (nums == null || nums.length == 0) return 0;
+        if (k == 0) {
+            int count = 0;
+            for (int num : nums) {
+                if (num == 0) 
+                    count++;
+            }
+            return count;
+        }
+        int lo = 0, hi = 0, sum = 0, count = 0;
+        while (hi < nums.length) {
+            while (hi < nums.length && sum < k) {
+                sum += nums[hi++];
+            }
+            while (lo <= hi && sum > k) {
+                sum -= nums[lo++];
+            }
+            if (sum == k && lo < nums.length) {
+                count++;
+                sum -= nums[lo++];
+            }
+        }
+        return count;
+    }
+}

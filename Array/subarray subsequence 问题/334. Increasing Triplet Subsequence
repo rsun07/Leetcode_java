@@ -1,0 +1,94 @@
+// 最简单的办法，brute force，n^3的解法
+class Solution {
+    public boolean increasingTriplet(int[] nums) {
+        if (nums == null || nums.length < 3) {
+            return false;
+        }
+        
+        for (int i = 0; i < nums.length; i++) {
+            for (int j = i+ 1; j < nums.length; j++) {
+                for (int k = j + 1; k < nums.length && nums[i] < nums[j]; k++) {
+                    if (nums[k] > nums[j]) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+}
+
+// 简单想到用n^2, 存下不必要的计算
+class Solution {
+    public boolean increasingTriplet(int[] nums) {
+        if (nums == null || nums.length < 3) {
+            return false;
+        }
+        boolean[] hasSmaller = new boolean[nums.length];
+        for (int i = 1; i < nums.length; i++) {
+            // 注意这里要等于0，因为要判断nums[i] 是否 大于nums[0]。这里的循环，不止是在找triple，还在为后面的结果做计算存结果。
+            for (int j = i-1; j >= 0; j--) {
+                if (nums[i] > nums[j]) {
+                    if (hasSmaller[j]) {
+                        return true;
+                    }
+                    hasSmaller[i] = true;
+                }
+            }
+        }
+        return false;
+    }
+}
+
+// 再仔细看上面，第二个j的for循环。其实有一点像买股票的题目。看这个for是找什么？第一是找有没有比nums[i] 更小的，且我们已知再往前还有更小的，这时候直接return true。第二是找有没有比nums[i] 更小的数字，这时候我们可以把hasSmaller[i] 设为 true。其实我们只需要保存两个变量就行，一个是前面有更小的最小的数字，第二个是最小的数字。
+
+class Solution {
+    public boolean increasingTriplet(int[] nums) {
+        if (nums == null || nums.length < 3) {
+            return false;
+        }
+        Integer min = nums[0], minHasSmaller = null;
+        for (int i = 1; i < nums.length; i++) {
+            if (minHasSmaller != null && nums[i] > minHasSmaller) {
+                return true;
+            }
+            if (nums[i] < min) {
+                min = nums[i];
+            } else if (nums[i] > min) {
+                if (minHasSmaller == null) {
+                    minHasSmaller = nums[i];
+                } else {
+                    minHasSmaller = Math.min(minHasSmaller, nums[i]);
+                }
+            }
+        }
+        return false;
+    }
+}
+
+
+// 所以答案里面，很难理解，又很奇技淫巧的方法，其实就是上面那个再进行一些优化而得来的。
+
+// 想法太奇妙了，很难想到，一般总会卡在，如果之前有 3，4. 然后遇到了一个1，该如何处理，是舍弃3，4，还是将其存在另外的地方？
+// 这里就是利用了两个指针，second min 其实是存了3,4， 然后用min来存1
+class Solution {
+    public boolean increasingTriplet(int[] nums) {
+        if (nums == null || nums.length < 3) {
+            return false;
+        }
+        
+        int min =  Integer.MAX_VALUE, secondMin = Integer.MAX_VALUE;
+        for (int num : nums) {
+            // be careful, must smaller and equal. because this if clause also help the next else if clause
+            // check example [1, 1, 1, 1, 1], what happen if no equal here
+            if (num <= min) {
+                min = num;
+            } else if (num <= secondMin) {
+                secondMin = num;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    }
+}

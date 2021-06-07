@@ -1,0 +1,60 @@
+/*
+用heap，直觉上的解决方案。以前可行，新加的测试条件会超时。
+
+*/
+class Solution {
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        if (nums == null || nums.length == 0 || k <= 0) {
+            return new int[0];
+        }
+        int[] output = new int[nums.length - k + 1];
+        PriorityQueue<Integer> maxHeap = new PriorityQueue<>(k, (i1, i2) -> -Integer.compare(i1, i2));
+        for (int i = 0; i < nums.length; i++) {
+            maxHeap.add(nums[i]);
+            if (i >= k - 1) {
+                output[i-k+1] = maxHeap.peek();
+                maxHeap.remove(nums[i-k+1]);
+            }
+        }
+        return output;
+    }
+}
+
+
+/*
+O(N) solution
+循环一遍，然后每一个value最多进出list一次。
+
+Idea is, need to remove max value when sliding window moves. At the same time, need to find the second max value instead.
+维持一个倒序排列的数组，最多k个数字。
+
+*/
+class Solution {
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        if (nums == null || nums.length == 0 || k <= 0) {
+            return new int[0];
+        }
+        int[] output = new int[nums.length - k + 1];
+        LinkedList<Integer> maxList = new LinkedList<>();
+        
+        for (int i = 0; i < nums.length; i++) {
+            // Step 1: if current is bigger than previous, then there is no need to keep previous value
+            // be careful, we should maintain duplicate
+            while (!maxList.isEmpty() && maxList.getLast() < nums[i]) {
+                maxList.removeLast();
+            }
+            maxList.addLast(nums[i]);
+            
+            // Step 2: update windown max
+            if (i >= k - 1) {
+                output[i-k+1] = maxList.getFirst();
+            }
+            
+            // Step 3: remove when windown move
+            if (i >= k - 1 && maxList.getFirst() == nums[i-k+1]) {
+                maxList.removeFirst();
+            }
+        }
+        return output;
+    }
+}

@@ -1,0 +1,72 @@
+// 这是facebook和Bytedance都会考的题目，主要其实是在于followup上面。
+
+// 有一种更加naive的，把两个数组都放到Set里面，这里就不写了。
+
+class Solution {
+    public int[] intersect(int[] nums1, int[] nums2) {
+        if (nums1 == null || nums1.length == 0 || nums2 == null || nums2.length == 0) {
+            return new int[0];
+        }
+        // public HashMap(int initialCapacity, float loadFactor), to avoid rehash
+        Map<Integer, Integer> numToCount = new HashMap<>(nums1.length, 1);
+        for (int num : nums1) {
+            numToCount.put(num, numToCount.getOrDefault(num, 0) + 1);
+        }
+        
+        List<Integer> intersection = new ArrayList<>();
+        for (int num : nums2) {
+            if (numToCount.containsKey(num)) {
+                intersection.add(num);
+                int count = numToCount.get(num);
+                if (count == 1) {
+                    numToCount.remove(num);
+                } else {
+                    numToCount.put(num, count - 1);
+                }
+            }
+        }
+        return intersection.stream().mapToInt(i -> i).toArray();
+    }
+}
+
+// 可以稍微优化，把size更小的那一个放hashmap，这也是follow up里的一个题目，如果其中一个比另一个小很多。这里首先要知道，两个array都要过一遍，这个是无法避免的。虽然HashMap是O(1)平均，但是算哈希也要时间，哈希发生冲突的话，也需要增加时间。那么更短的那一个，写入的时候，HashMap扩容rehash的次数更少。读取的时候，哈希碰撞的概率更低，会让程序运行更快。
+// 如何做？很简单，比较size大小，如果nums2更小，return intersect(nums2, nums1);
+
+
+// 排序的做法，如果已经排序完毕，则用这个方法更快。可以避免rehash和hash冲突。
+class Solution {
+    public int[] intersect(int[] nums1, int[] nums2) {
+        if (nums1 == null || nums1.length == 0 || nums2 == null || nums2.length == 0) {
+            return new int[0];
+        }
+        List<Integer> intersection = new ArrayList<>();
+        Arrays.sort(nums1);
+        Arrays.sort(nums2);
+        for (int i1 = 0, i2 = 0; i1 < nums1.length && i2 < nums2.length;) {
+            if (nums1[i1] == nums2[i2]) {
+                intersection.add(nums1[i1]);
+                i1++;
+                i2++;
+            } else if (nums1[i1] < nums2[i2]) {
+                i1++;
+            } else {
+                i2++;
+            }
+        }
+        return intersection.stream().mapToInt(i -> i).toArray();
+    }
+}
+
+
+/*
+Follow up 
+What if elements of nums2 are stored on disk, and the memory is limited such that you cannot load all elements into the memory at once?
+
+关键词：external sort
+
+https://zh.wikipedia.org/wiki/%E5%A4%96%E6%8E%92%E5%BA%8F
+
+主要步骤：
+把硬盘中的数据分块排序。排序结束后，用merge k sorted list的办法，进行merge。注意，merge的过程中，不能从硬盘读，会特别特别慢。可以这样。比如只有100M的内存，则先每次把100M数据读入，排序好以后写入硬盘。这样就会有很多很多100M的排序好的block。假设一共是900M的数据，100M的内存，下一步就是，每次把9个block中的10M数据读进内存里，剩下的10M作为缓冲区写结果。如果有4.5G的数据，则每次读入45个block每一个的2M到内存，剩下10M当成缓冲区，当然也可以适当减小缓冲区来提高效率。
+
+*/

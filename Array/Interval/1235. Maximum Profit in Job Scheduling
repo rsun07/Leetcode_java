@@ -1,0 +1,78 @@
+// 这道题相当难。非常容易错。
+
+// 一开始的想法是，按照start 排序，排序后，每次i，从i-1开始找，找前面的endTime比i的startTime小或者想等的情况，加起来。如果找不到，就只是i的profit。这里有一个问题，就是不能break，如果找到一个更小的就break，因为不是按照endTime排序的，有可能出现这种情况，i的startTime是100，找到一个endTime是100的，profit只有10，break了。但是如果继续往前找，可以找到一个endTime是10，profit是20的。所以这种方法不行，必须从i-1到0全部过一遍才行。这样会超时。
+
+// 还要特别注意，这里的DP不是全局最大，只是局部最大。
+class Solution {
+    public int jobScheduling(int[] startTime, int[] endTime, int[] profit) {
+        int n = startTime.length;
+        int[][] jobs = new int[n][3];
+        for (int i = 0; i < n; i++) {
+            jobs[i] = new int[] {startTime[i], endTime[i], profit[i]};
+        }
+        Arrays.sort(jobs, (j1, j2) -> Integer.compare(j1[0], j2[0]));
+        // dp 的含义，如果取i，dp[i]表示如果取i，最大值。dp[n-1]不一定是全局最大值
+        int[] dp = new int[n];
+        dp[0] = jobs[0][2];
+        int maxProfit = dp[0];
+        for (int i = 1; i < n; i++) {
+            int localMax = 0;
+            for (int j = i-1; j >= 0; j--) {
+                if (jobs[j][1] <= jobs[i][0]) {
+                    localMax = Math.max(localMax, dp[j]);
+                }
+            }
+            dp[i] = jobs[i][2] + localMax;
+            maxProfit = Math.max(maxProfit, dp[i]);
+        }
+        return maxProfit;
+    }
+}
+
+// 换一个思路，根据endTime排序，这样每次出来的，都会是endTime比之前的更后的，那么，i的时候，startTime去跟过去的Endtime比，就能用二分查找的办法找到那个刚好小于等于startTim的Endtime。这里如果要用二分查找，另一个非常重要的点是，此时，dp[i]必须是全局解，不能只是像上面，取i时候的解。如果不是全局解，二分查找找到i无意义，因为有可能有前面更小的i，有比该i的profit更大。
+
+// 这里特别注意两个点，第一个是，根据endTime排序，这样才能用二分查找。如果根据startTime排序，则没办法根据EndTime 二分找，另一个点就是dp要是全局解，而不能是局部解。
+
+class Solution {
+    public int jobScheduling(int[] startTime, int[] endTime, int[] profit) {
+        int n = startTime.length;
+        int[][] jobs = new int[n][3];
+        for (int i = 0; i < n; i++) {
+            jobs[i] = new int[] {startTime[i], endTime[i], profit[i]};
+        }
+        Arrays.sort(jobs, (j1, j2) -> Integer.compare(j1[1], j2[1]));
+        // dp 的含义，i个job的时候，全局的最大profit值
+        List<Integer> endTimes = new ArrayList<>(), maxProfits = new ArrayList<>();
+        endTimes.add(jobs[0][1]);
+        maxProfits.add(jobs[0][2]);
+        for (int i = 1; i < n; i++) {
+            int preIndex = binarySearch(jobs[i][0], endTimes);
+            int localMax = jobs[i][2];
+            if (preIndex >= 0) localMax += maxProfits.get(preIndex);
+            // 注意，这里>= 也能过，但是其实没必要，profit相等的情况下，我们取endTime更小的放在dp里面。
+            if (localMax > maxProfits.get(maxProfits.size()-1)) {
+                endTimes.add(jobs[i][1]);
+                maxProfits.add(localMax);
+            }
+
+        }
+        return maxProfits.get(maxProfits.size()-1);
+    }
+    
+    private int binarySearch(int startTime, List<Integer> endTimes) {
+        int lo = 0, hi = endTimes.size() - 1;
+        while (lo <= hi) {
+            int mid = lo + (hi-lo)/2;
+            if (endTimes.get(mid) <= startTime) {
+                if (mid == endTimes.size() - 1 || endTimes.get(mid+1) > startTime) {
+                    return mid;
+                } else {
+                    lo = mid + 1;
+                }
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return -1;
+    }
+}

@@ -1,0 +1,12 @@
+E	floor​(E e)	
+Returns the greatest element in this set less than or equal to the given element, or null if there is no such element.
+小于e的最大值
+
+
+E	ceiling​(E e)	
+Returns the least element in this set greater than or equal to the given element, or null if there is no such element.
+大于e的最小值
+
+注意，找不到两个都会返回null
+
+两个方法的时间复杂度都是O(log n)

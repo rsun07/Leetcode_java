@@ -1,0 +1,79 @@
+// 付费题，我曾经用来面试别人。很容易出错。错就在于，你如果按照meeting开始是时间排序，但是meeting结束的时间是无序的。
+
+/*
+
+Given an array of meeting time intervals intervals where intervals[i] = [starti, endi], return the minimum number of conference rooms required.
+
+ 
+
+Example 1:
+
+Input: intervals = [[0,30],[5,10],[15,20]]
+Output: 2
+Example 2:
+
+Input: intervals = [[7,10],[2,4]]
+Output: 1
+ 
+
+Constraints:
+
+1 <= intervals.length <= 104
+0 <= starti < endi <= 106
+
+*/
+
+// 错误的解法，[[0,30],[5,10],[15,20]]。后开始的meeting不一定后结束，有可能先开始的meeting很长很长，所以这种比较方法不正确。
+class Solution {
+    public int minMeetingRooms(int[][] intervals) {
+        if (intervals == null || intervals.length == 0) {
+            return 0;
+        }
+        if (intervals.length == 1) {
+            return 1;
+        }
+        Arrays.sort(intervals, (i1, i2) -> {
+            if (i1[0] == i1[0]) {
+                return Integer.compare(i1[1], i2[1]);
+            }
+            return Integer.compare(i1[0], i2[0]);
+        });
+        int count = 1, lo = 0;
+        for (int hi = 1; hi < intervals.length; hi++) {
+            int[] interval = intervals[hi];
+            for (int i = hi-1; i >= lo; i--) {
+                if (intervals[i][1] <= interval[0]) {
+                    lo = i;
+                    break;
+                }
+            }
+            count = Math.max(count, hi - lo + 1);
+        }
+        return count;
+    }
+}
+
+// 要让输入是按照开始时间排序，比较的时候按照结束时间排序，可以及时把已经结束的meeting给close掉。
+class Solution {
+    public int minMeetingRooms(int[][] intervals) {
+        if (intervals == null || intervals.length == 0) {
+            return 0;
+        }
+        if (intervals.length == 1) {
+            return 1;
+        }
+        Arrays.sort(intervals, (i1, i2) -> Integer.compare(i1[0], i2[0]));
+        PriorityQueue<int[]> minHeap = new PriorityQueue<>((i1, i2) -> Integer.compare(i1[1], i2[1]));
+        int count = 1;
+        for (int[] interval : intervals) {
+            while (minHeap.size() > 0 && minHeap.peek()[1] <= interval[0]) {
+                minHeap.poll();
+            }
+            minHeap.offer(interval);
+            count = Math.max(count, minHeap.size());
+        }
+        return count;
+    }
+}
+
+// 答案里面还有一种解法，比较变态，一般想不到的。把开始时间和结束时间打乱来，分别排序。这样可以证明最终可以得到答案的。

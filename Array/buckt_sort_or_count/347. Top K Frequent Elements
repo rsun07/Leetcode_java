@@ -1,0 +1,67 @@
+// 无论如何解，都需要先遍历，存下count。差一点的解法就是之后用count来排序，然后从高到低选。注意排序的时候可以用map里的value，传一个comparator的lambda
+
+// 更节约一点的解法就是用Heap，comparator同理。这样的复杂度是O(Nlogk), 上面是O(NlogN)
+class Solution {
+    public int[] topKFrequent(int[] nums, int k) {
+        if (nums == null || nums.length == 0 || k == 0) {
+            return new int[0];
+        }
+        Map<Integer, Integer> numToCount = new HashMap<>();
+        for (int num : nums) {
+            numToCount.put(num, numToCount.getOrDefault(num, 0) + 1);
+        }
+        
+        PriorityQueue<Integer> minHeap = new PriorityQueue<>(k, (i1, i2) -> Integer.compare(numToCount.get(i1), numToCount.get(i2)));
+        // 这里不能用 nums里的数字循环，否则会出现重复
+        for (int num : numToCount.keySet()) {
+            minHeap.offer(num);
+            if (minHeap.size() > k) {
+                minHeap.poll();
+            }
+        }
+        int[] output = new int[k];
+        for (int i = 0; i < k; i++) {
+            output[i] = minHeap.poll();
+        }
+        return output;
+    }
+}
+
+// 凡是涉及到count的题目，都可以考虑bucket sort，因为count永远不会超过N，正是使用的好时候。
+// 还是比较麻烦的，有很多需要注意的点。
+
+class Solution {
+    public int[] topKFrequent(int[] nums, int k) {
+        if (nums == null || nums.length == 0 || k <= 0) {
+            return new int[0];
+        }
+        Map<Integer, Integer> numToCount = new HashMap<>();
+        for (int num : nums) {
+            numToCount.put(num, numToCount.getOrDefault(num, 0) + 1);
+        }
+        
+        // 主要是有可能两个或者多个数字的count相等。这里没办法用int[][], 因为不知道第二维度有多少个，只能用List。
+        List<Integer>[] counts = new List[nums.length + 1];
+        for (int num : numToCount.keySet()) {
+            int count = numToCount.get(num);
+            if (counts[count] == null) {
+                counts[count] = new ArrayList<>();
+            }
+            counts[count].add(num);
+        }
+        
+        int[] res = new int[k];
+        int i = 0;
+        // 这里也可以省略这个i，直接用k作为index，因为输出的顺序没讲究，所以可以直到k小于0为止。
+        for (int count = nums.length; count >= 0 && i < k; count--) {
+            List<Integer> list = counts[count];
+            if (list != null && list.size() != 0) {
+                for (int num : list) {
+                    res[i++] = num;
+                }
+            }
+        }
+        return res;
+    }
+}
+

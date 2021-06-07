@@ -1,0 +1,27 @@
+/*
+
+思路上的易错点，容易把0的情况，归零情况想复杂。
+
+写代码的易错点，preLocalMax这里，这个值会变化，要提前存下来。
+
+
+*/
+
+class Solution {
+    public int maxProduct(int[] nums) {
+        // {a, b, c, d, e, f, g}
+        // current number is f, previous max is c*d*e, previous min is b*c*d*e
+        // current max is the largest of the three: f itself, c*d*e*f, b*c*d*e*f
+        // currnet min is the smallest of the three
+        if (nums == null || nums.length == 0) return 0;
+        // globalMin doesn't make sense because {-2,0,-1} senario, cannot return -2*-1
+        int globalMax = nums[0], localMax = nums[0], localMin = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            int preLocalMax = localMax;
+            localMax = Math.max(Math.max(nums[i], nums[i]*localMin), nums[i]*localMax);
+            localMin = Math.min(Math.min(nums[i], nums[i]*localMin), nums[i]*preLocalMax);
+            globalMax = Math.max(localMax, globalMax);
+        }
+        return globalMax;
+    }
+}

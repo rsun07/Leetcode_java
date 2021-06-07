@@ -1,0 +1,42 @@
+// 这道题做题的思路，还是先从naive，再到复杂。
+// Naive的手段就是，挨个加油站作为起点，然后往后跑，看看能不能跑完。
+// 仔细一想，其实很多加法都是重复计算了的，如何把之前算过的利用起来？
+// 从头开始算，如果发现 gas的和，减去cost的和为负数，则即使可能从这个点开始，那么后面一定会有更强大的点可以补齐负数。所以略过这一个点。如果后面没有更强大的点补齐负数，则根本不可能成立。同理，如果后面的点是正数，哪怕有多个点存在，也直接返回这一个点，不会错。
+// 上面的想法的错误的，简单举例子[1,2,3,4,5]，[3,4,5,1,2]。 不是最后一个开始，而是要从倒数第二个开始。
+
+class Solution {
+    public int canCompleteCircuit(int[] gas, int[] cost) {
+        if (gas == null || gas.length == 0 || cost == null || cost.length == 0 || gas.length != cost.length) {
+            return -1;
+        } 
+        int balance = 0, station = 0;
+        for (int i = 0; i < gas.length; i++) {
+            balance = balance + gas[i] - cost[i];
+            if (balance < 0) {
+                station++;
+            }
+        }
+        return balance >= 0 ? station : -1;
+    }
+}
+
+// 再想，什么样的情况下，什么样的station我可以选择？如果让人来选，我怎么选？首先这个加油站本身，gas一定要大于cost。
+// 现在难点就在于，如果从0开始走，到某一个加油站的时候，可能balance是负值，但是过后有不断的正数加进来，让综合的值是非负数。
+// 这里虽然我先看了答案，但是我感觉思路已经清晰了。就是存两个balance，一个是真实的balance，用于确认是否存在，是否返回-1. 另一个就是每当前面是负数，我都把这一个值改成0，这样一切从零开始，只要真实的balance最后是非负数就一定存在。道理就在于，前面如果能有盈余，则一直跑下去，前面如果没有盈余是负数了，我就当成是从这里开始，看往后跑下去能不能跑完，至于前面已经跑过了的，用真实balance检查是否符合要求。
+class Solution {
+    public int canCompleteCircuit(int[] gas, int[] cost) {
+        if (gas == null || gas.length == 0 || cost == null || cost.length == 0 || gas.length != cost.length) {
+            return -1;
+        } 
+        int actualBalance = 0, localBalance = 0, station = 0;
+        for (int i = 0; i < gas.length; i++) {
+            actualBalance = actualBalance + gas[i] - cost[i];
+            localBalance = localBalance + gas[i] - cost[i];
+            if (localBalance < 0) {
+                localBalance = 0;
+                station = i+1;
+            }
+        }
+        return actualBalance >= 0 ? station : -1;
+    }
+}

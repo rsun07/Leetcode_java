@@ -1,0 +1,131 @@
+// 其实就是215的变形 215. Kth Largest Element in an Array_quick select
+
+// Heap
+class Solution {
+    public int[][] kClosest(int[][] points, int k) {
+        if (points == null || points.length == 0) return new int[0][0];
+       
+        PriorityQueue<Point> maxHeap = new PriorityQueue<>(k+1, (p1, p2) -> -Integer.compare(p1.dis, p2.dis));
+        for (int[] point : points) {
+            Point p = new Point(point[0], point[1]);
+            maxHeap.add(p);
+            if (maxHeap.size() > k) {
+                maxHeap.remove();
+            }
+        }
+        
+        int[][] output = new int[k][2];
+        for (int i = 0; i < k; i++) {
+            Point point = maxHeap.remove();
+            output[i] = new int[]{point.x, point.y};
+        }
+        return output;
+    }
+    
+    private class Point {
+        int x, y, dis;
+        Point(int x, int y) {
+            this.x = x;
+            this.y = y;
+            this.dis = x*x + y*y;
+        }
+    }
+}
+
+// quick select
+class Solution {
+    public int[][] kClosest(int[][] points, int k) {
+        if (points == null || points.length == 0) return new int[0][0];
+        Point[] ps = new Point[points.length];
+        for (int i = 0; i < points.length; i++) {
+            ps[i] = new Point(points[i]);
+        }
+        
+        int start = 0, end = points.length - 1;
+        while (start < k) {
+            int lo = start, i = start + 1, hi = end;
+            while (i <= hi) {
+                if (ps[i].dis == ps[lo].dis) {
+                    i++;
+                } else if (ps[i].dis > ps[lo].dis) {
+                    swap(ps, i, hi--);
+                } else {
+                    swap(ps, i++, lo++);
+                }
+            }
+            
+            if (hi < k) {
+                start = hi + 1;
+            } else if (lo > k) {
+                end = lo - 1;
+            } else {
+                start = lo;
+                break;
+            }
+        }
+        
+        int[][] output = new int[k][2];
+        for (int i = 0; i < k; i++) {
+            output[i] = ps[i].point;
+        }
+        return output;
+    }
+    
+    private void swap(Point[] points, int i, int j) {
+        Point temp = points[i];
+        points[i] = points[j];
+        points[j] = temp;
+    }
+    
+    private class Point {
+        int[] point;
+        int dis;
+        Point(int[] point) {
+            this.point = point;
+            this.dis = point[0]*point[0] + point[1]*point[1];
+        }
+    }
+}
+
+// 不借助 Point类直接做。
+class Solution {
+    public int[][] kClosest(int[][] points, int k) {
+        if (points == null || points.length == 0) return new int[0][0];
+       
+        int start = 0, end = points.length - 1;
+        while (start < k) {
+            int lo = start, i = start + 1, hi = end, pivotal = getDis(points[lo]);
+            while (i <= hi) {
+                int curDis = getDis(points[i]);
+                if (curDis == pivotal) {
+                    i++;
+                } else if (curDis > pivotal) {
+                    swap(points, i, hi--);
+                } else {
+                    swap(points, i++, lo++);
+                }
+            }
+            
+            if (hi < k) {
+                start = hi + 1;
+            } else if (lo > k) {
+                end = lo - 1;
+            } else {
+                start = lo;
+                break;
+            }
+        }
+        
+        return Arrays.copyOf(points, k);
+    }
+    
+    private int getDis(int[] point) {
+        return point[0]*point[0] + point[1]*point[1];
+    }
+    
+    private void swap(int[][] points, int i, int j) {
+        int[] temp = points[i];
+        points[i] = points[j];
+        points[j] = temp;
+    }
+}

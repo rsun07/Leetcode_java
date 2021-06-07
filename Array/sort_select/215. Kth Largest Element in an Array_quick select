@@ -1,0 +1,138 @@
+// 这个题facebook经常问。抖音也问。Quick select是FB的考点之一，不能用Heap，heap的谁都会，FB非常在意这一点。
+
+// 最简单的肯定还是用Heap，java里面是priority queue。记住java里的queue by default是min heap，头上的是最小的。这样可以从小到大排序，也就是可以留下第k大的。
+
+// quick select，记住，average performance是 O(n), 最差情况下是O(n^2)，当刚好是倒序排列的时候
+class Solution {
+    public int findKthLargest(int[] nums, int k) {
+        int start = 0, end = nums.length-1, m = nums.length - k;
+        while (start < end) {
+            int lo = start, hi = end, i = start + 1;
+            while(i <= hi) {
+                // 注意，这里lo指针会变化，但是lo所指向的数值是不会变化的。
+                if (nums[i] < nums[lo]) {
+                    swap(nums, lo++, i++);
+                } else if (nums[i] == nums[lo]) {
+                    i++;
+                } else {
+                    swap(nums, i, hi--);
+                }
+            }
+            // 根据下面的例子，这里不需要再swap了，正常的quick sort是需要的
+            if (lo == m) {
+                return nums[lo];
+            } else if (lo > m) {
+                end = lo - 1;
+            } else {
+                start = lo + 1;
+            }
+        }
+        return nums[start];
+    }
+    
+    private void swap(int[] nums, int lo, int hi) {
+        int temp = nums[lo];
+        nums[lo] = nums[hi];
+        nums[hi] = temp;
+    }
+}
+
+/*
+lo = 0, i = 1, hi = 5
+[3,2,1,5,6,4]
+
+lo = 1, i = 2, hi = 5
+[2,3,1,5,6,4]
+
+lo = 2, i = 3, hi = 5
+[2,1,3,5,6,4]
+
+lo = 2, i = 3, hi = 4
+[2,1,3,4,6,5]
+
+lo = 2, i = 3, hi = 3
+[2,1,3,6,4,5]
+
+此时不能停下，因为我们还没有判断过6，这里的6有可能是一个1，此时就要跟lo对换。
+lo = 2, i = 3, hi = 2
+[2,1,3,6,4,5]
+
+此时，lo的左边一定小于lo，lo的右边大于等于lo。可以再拿一个有相等的例子来看看，相等的时候我们只加i，所以相等的也会在lo的右边。
+
+*/
+
+
+// 可以在开始之前，加一个shuffle方法，这样practice里面可以保证O(n)的时间复杂度，虽然不是严格意义上的保证。
+private void shuffle(int a[]) {
+
+        final Random random = new Random();
+        for(int ind = 1; ind < a.length; ind++) {
+            final int r = random.nextInt(ind + 1);
+            exch(a, ind, r);
+        }
+    }
+
+
+// LC的答案
+import java.util.Random;
+class Solution {
+  int [] nums;
+
+  public void swap(int a, int b) {
+    int tmp = this.nums[a];
+    this.nums[a] = this.nums[b];
+    this.nums[b] = tmp;
+  }
+
+
+  public int partition(int left, int right, int pivot_index) {
+    int pivot = this.nums[pivot_index];
+    // 1. move pivot to end
+    swap(pivot_index, right);
+    int store_index = left;
+
+    // 2. move all smaller elements to the left
+    for (int i = left; i <= right; i++) {
+      if (this.nums[i] < pivot) {
+        swap(store_index, i);
+        store_index++;
+      }
+    }
+
+    // 3. move pivot to its final place
+    swap(store_index, right);
+
+    return store_index;
+  }
+
+  public int quickselect(int left, int right, int k_smallest) {
+    /*
+    Returns the k-th smallest element of list within left..right.
+    */
+
+    if (left == right) // If the list contains only one element,
+      return this.nums[left];  // return that element
+
+    // select a random pivot_index
+    Random random_num = new Random();
+    int pivot_index = left + random_num.nextInt(right - left); 
+    
+    pivot_index = partition(left, right, pivot_index);
+
+    // the pivot is on (N - k)th smallest position
+    if (k_smallest == pivot_index)
+      return this.nums[k_smallest];
+    // go left side
+    else if (k_smallest < pivot_index)
+      return quickselect(left, pivot_index - 1, k_smallest);
+    // go right side
+    return quickselect(pivot_index + 1, right, k_smallest);
+  }
+
+  public int findKthLargest(int[] nums, int k) {
+    this.nums = nums;
+    int size = nums.length;
+    // kth largest is (N - k)th smallest
+    return quickselect(0, size - 1, size - k);
+  }
+}

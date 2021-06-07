@@ -1,0 +1,42 @@
+class Solution {
+    public boolean checkSubarraySum(int[] nums, int k) {
+        if (nums == null || nums.length == 0) return false;
+        int[] sums = Arrays.copyOf(nums, nums.length);
+        for (int len = 2; len <= nums.length; len++) {
+            // i is the last index of the subarray
+            int preSum = sums[len-2];
+            for (int i = len-1; i < nums.length; i++) {
+                int subarraySum = preSum + nums[i];
+                if (subarraySum == 0 && k == 0 || k != 0 && subarraySum % k == 0) return true;
+                preSum = sums[i];
+                sums[i] = subarraySum;
+            }
+        }
+        return false;
+    }
+}
+
+// prefix sum的方法，这里就是要找出，如何用hashmap找。这题跟传统的prefix sum不太一样，传统的就类似two sum，这里是要n*k，有点不一样。
+// 看了答案以后才知道，这里是要这样的，Sum(j) - Sum(i) 就是一个subarray，如果 Sum(i, j) % k = 0, 则会有 Sum(j) % k - Sum(i) % k = 0, 推出Sum(j) % k = Sum(i) % k
+
+class Solution {
+    public boolean checkSubarraySum(int[] nums, int k) {
+        if (nums == null || nums.length == 0) return false;
+        Map<Integer, Integer> sumToIndex = new HashMap<>();
+        // incase the prefix sum itself equals n*k
+        // 这一点在做prefix sum的时候要特别注意，就是如果不加这一点，永远是考察Sum(i, j)，i < j. 会错过Sum(j)本身符合条件的情况。
+        sumToIndex.put(0, -1);
+        for (int i = 0, sum = 0; i < nums.length; i++) {
+            sum += nums[i];
+            if (k != 0) {
+                sum = sum % k;
+            }
+            if (sumToIndex.containsKey(sum)) {
+                if (i - sumToIndex.get(sum) > 1) return true;
+            } else {
+                sumToIndex.put(sum, i);
+            }
+        }
+        return false;
+    }
+}

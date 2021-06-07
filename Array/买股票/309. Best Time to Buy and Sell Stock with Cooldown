@@ -1,0 +1,107 @@
+// 解法1，错误的解法，写到后面自己发现错误了
+// 这个解法，只cool down了一次，而事实上，每一次的交易，中间都需要cool down至少一天。
+// 不仅仅是这个错误，[1,2], [1,2,4] 带进去，错误百出。 数组的题目，不能凭感觉，要写下一个例子，带进去看看，看看我所写所想是否符合条件，是否有bug。
+
+class Solution {
+    public int maxProfit(int[] prices) {
+        if (prices == null || prices.length < 2) {
+            return 0;
+        }
+        int N = prices.length;
+        int[] left = new int[N], right = new int[N];
+        for (int i = 1; i < N; i++) {
+            left[i] = left[i-1];
+            if (prices[i] > prices[i-1]) {
+                left[i] += prices[i] - prices[i-1];
+            }
+        }
+        
+        for (int i = N - 2; i > 0; i--) {
+            right[i] = right[i+1];
+            if (prices[i] < prices[i+1]) {
+                right[i] += prices[i+1] - prices[i];
+            }
+        }
+        
+        // 也是错的。这样就等于没有cooldown了，完全没有。
+        int maxProfit = Math.max(left[N-1], right[0]);
+        // set i as the cool down day
+        for (int i = 1; i < N-1; i++) {
+            maxProfit = Math.max(maxProfit, left[i-1] + right[i+1]);
+        }
+    }
+}
+
+
+// 解法2，重头开始向，不要被买股票III和IV影响了。写出了非常直白的，DP版本的brute force
+class Solution {
+    public int maxProfit(int[] prices) {
+        if (prices == null || prices.length < 2) {
+            return 0;
+        }
+        int N = prices.length;
+        int[] profits = new int[N];
+        // if sell at day i
+        for (int i = 1; i < N; i++) {
+            // buy at day j
+            profits[i] = profits[i-1];
+            for (int j = 0; j < i; j++) {
+                if (prices[i] > prices[j]) {
+                    int profit = prices[i] - prices[j];
+                    if (j >= 2) {
+                        profit += profits[j-2];
+                    }
+                    profits[i] = Math.max(profits[i], profit);
+                }
+            }
+        }
+        return profits[N-1];
+    }
+}
+
+// 因为有了之前买股票题目的经验，我意识到，其实第二个for循环，就是j的这一个，我们就是要找-prices[j] + profits[j-2] 最大的一个，这一个完全可以用一个值来传递到后面，而不是每次都用循环来反复比较。于是写下了如下的写法，注意此时0和1都要被当做特殊开头条件来对待。特别要注意易错的一个点，        int maxBalance = Math.max(-prices[0], -prices[1]);不能只考虑0，要1和0同时考虑，任意一天都可以卖。
+
+class Solution {
+    public int maxProfit(int[] prices) {
+        if (prices == null || prices.length < 2) {
+            return 0;
+        }
+        int N = prices.length;
+        int[] profits = new int[N];
+        
+        // means buy at day 0
+        int maxBalance = Math.max(-prices[0], -prices[1]);
+        profits[1] = prices[1] > prices[0] ? prices[1] - prices[0] : 0;
+        // if sell at day i
+        for (int i = 2; i < N; i++) {
+            profits[i] = Math.max(profits[i-1], maxBalance + prices[i]);
+            // if buy at day i
+            maxBalance = Math.max(maxBalance, profits[i-2] - prices[i]);
+        }
+        return profits[N-1];
+    }
+}
+
+
+// 在上面的基础上，空间也可以优化。完全没必要存profits数组，只需要两个数字就行了，O(1)的空间，注意，此时需要profits[i-2]，其实需要三个数字。
+class Solution {
+    public int maxProfit(int[] prices) {
+        if (prices == null || prices.length < 2) {
+            return 0;
+        }
+        int N = prices.length;        
+        // means buy at day 0
+        int maxBalance = Math.max(-prices[0], -prices[1]);
+        int preProfit = 0;
+        int curProfit = prices[1] > prices[0] ? prices[1] - prices[0] : 0;
+        // if sell at day i
+        for (int i = 2; i < N; i++) {
+            int profit = Math.max(curProfit, maxBalance + prices[i]);
+            // if buy at day i
+            maxBalance = Math.max(maxBalance, preProfit - prices[i]);
+            preProfit = curProfit;
+            curProfit = profit;
+        }
+        return curProfit;
+    }
+}

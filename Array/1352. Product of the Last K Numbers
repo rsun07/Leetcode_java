@@ -1,0 +1,57 @@
+// 这题其实标准的解法估计还是prefix product的解法。
+
+// 我的第一想法是每次数字来了，我直接把返回的结果计算好。但是每次add操作都需要O(n) 次计算。
+
+class ProductOfNumbers {
+
+    private List<Integer> products;
+    public ProductOfNumbers() {
+        this.products = new ArrayList<>();
+    }
+    
+    public void add(int num) {
+        if (num == 0) {
+            products = new ArrayList<>();
+        } else {
+            if (num != 1) {
+                for (int i = 0; i < products.size(); i++) {
+                    products.set(i, products.get(i) * num);
+                }
+            }
+            products.add(num);
+        }
+    }
+    
+    public int getProduct(int k) {
+        if (k > products.size()) return 0;
+        return products.get(products.size() - k);
+    }
+}
+
+// 要特别小心，加第一个的时候，pre是空的，还有就是如果k更好等于size-1，也就是要全部的乘积，这时候，最后一个除法会出界。一个好的解决办法就是，提前存一个1.
+// 这里最好是有例子，就是说根据例子来判断，k和size的关系。而不是盲目的写。
+
+class ProductOfNumbers {
+
+    private List<Integer> prefixProducts;
+    public ProductOfNumbers() {
+        this.prefixProducts = new ArrayList<>();
+        prefixProducts.add(1);
+    }
+    
+    public void add(int num) {
+        if (num == 0) {
+            prefixProducts = new ArrayList<>();
+            prefixProducts.add(1);
+        } else {
+            int pre = prefixProducts.get(prefixProducts.size() - 1);
+            prefixProducts.add(pre * num);
+        }
+    }
+    
+    public int getProduct(int k) {
+        if (k >=  prefixProducts.size()) return 0;
+        int lastIndex = prefixProducts.size();
+        return prefixProducts.get(lastIndex-1) / prefixProducts.get(lastIndex-1-k);
+    }
+}

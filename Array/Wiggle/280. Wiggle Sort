@@ -1,0 +1,100 @@
+// 这道题莫名其妙变成付费题了。但是应该是这类题目的基础题目，经典题目，入门题目。
+
+/*
+
+Given an unsorted array nums, reorder it in-place such that nums[0] <= nums[1] >= nums[2] <= nums[3]....
+
+Example:
+
+Input: nums = [3,5,2,1,6,4]
+Output: One possible answer is [3,5,1,6,2,4]
+*/
+
+// 我记得我刚开始，几年前拿到这个题目的时候，第一想法很奇怪。是排序以后，1，2，3，4，5，6。 然后把6和2交换，再把5和4交换。但是会出问题的。因为把比较大的数字换到前面去了，后面的数字可能不够用。1，6，3，4，5，2. 然后再换一次就是1，6，3，5，4，2。后面这个5，4，2是不满足要求的。
+// 2021年初做的时候，就想明白了，不需要那么复杂啊。因为已经排序了，所以后面的一定是大于前面的，只需要两两对换就行了。简单写了两个例子，奇偶通吃
+
+class Solution {
+    public void wiggleSort(int[] nums) {
+        if (nums == null || nums.length < 2) {
+            return;
+        }
+        Arrays.sort(nums);
+        int lo = 1, hi = 2;
+        while (hi < nums.length) {
+            int temp = nums[hi];
+            nums[hi] = nums[lo];
+            nums[lo] = temp;
+            hi += 2;
+            lo += 2;
+        }
+    }
+}
+
+/*
+
+[1,2,3,4,5,6,7,8]
+
+[1,3,2,5,4,7,6]
+*/
+
+// 稍微优化一下的解法,写得更好看
+class Solution {
+    public void wiggleSort(int[] nums) {
+        if (nums == null || nums.length < 2) {
+            return;
+        }
+        Arrays.sort(nums);
+        for (int i = 1; i < nums.length - 1; i += 2 /* attention !!! */) {
+            int temp = nums[i+1];
+            nums[i+1] = nums[i];
+            nums[i] = temp;
+        }
+    }
+}
+
+
+// 下一种解法，其实还是用的上面类似的方法。当我操作i 和 i+1 这两个数字的关系的时候，i和i-1的关系已经操作结束了，确定是我们想看到的排序方法。这种情况只需要保证i和i+1是我们希望看到的顺序就行了。
+// 只是有一种担忧，就是会不会出现数字不够用的情况？不会，因为可以相等，举例，比如如果剩下的数字是[1,1,1,1] 或者[1,2,3,4] 或者[4,3,2,1]，无论如何，我们都可以排除符合要求的结果。可以自己试试
+class Solution {
+    public void wiggleSort(int[] nums) {
+        if (nums == null || nums.length < 2) {
+            return;
+        }
+        boolean less = true;
+        for (int i = 0; i < nums.length - 1; i++) {
+            if (less && nums[i] > nums[i+1]) {
+                swapWithNext(nums, i);
+            } else if (!less && nums[i] < nums[i+1]) {
+                swapWithNext(nums, i);
+            }
+            less = !less;
+        }
+    }
+    
+    private void swapWithNext(int[] nums, int i) {
+        int temp = nums[i+1];
+        nums[i+1] = nums[i];
+        nums[i] = temp;
+    }
+}
+
+
+class Solution {
+    public void wiggleSort(int[] nums) {
+        if (nums == null || nums.length < 2) {
+            return;
+        }
+
+        for (int i = 0; i < nums.length - 1; i++) {
+            if (((i % 2 == 0) && nums[i] > nums[i + 1]) || ((i % 2 == 1) && nums[i] < nums[i + 1])) {
+                swapWithNext(nums, i);
+            }
+        }  
+    }
+    
+    private void swapWithNext(int[] nums, int i) {
+        int temp = nums[i+1];
+        nums[i+1] = nums[i];
+        nums[i] = temp;
+    }
+}

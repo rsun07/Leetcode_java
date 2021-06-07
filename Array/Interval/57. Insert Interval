@@ -1,0 +1,26 @@
+// 两个interval之间，其实就三种情况，大类别两种，不overlap和overlap。不overlap分两种，A在B左边，B在A左边。overlap其实很多种，但是不要管，只要不是不overlap，就是有overlap。则去两者小的小，大的大，就merge到一起了。
+// 题目里说，假设输入的intervals是排序好的了，如果这个条件不成立，则需要自己排序。
+class Solution {
+    public int[][] insert(int[][] intervals, int[] newInterval) {
+        List<int[]> newIntervals = new ArrayList<>();
+        boolean merged = false;
+        for (int[] interval : intervals) {
+            if (interval[0] > newInterval[1]) {
+                merged = true;
+                newIntervals.add(newInterval);
+                newIntervals.add(interval);
+            } else if (interval[1] < newInterval[0]) {
+                newIntervals.add(interval);
+            } else {
+                newInterval[0] = Math.min(newInterval[0], interval[0]);
+                newInterval[1] = Math.max(newInterval[1], interval[1]);
+            }
+        }
+        if (!merged) {
+            newIntervals.add(newInterval);
+        }
+        
+    }
+}
+
+// 这道题还可以用 binary search做，就是稍微麻烦了一点。

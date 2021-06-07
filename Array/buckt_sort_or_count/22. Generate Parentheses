@@ -1,0 +1,35 @@
+// 这一题，最直接的想法肯定还是用heap。但是考虑到数字的count不会超过nums.length,所以count其实是有范围的，0到N。所以可以用bucket count的思路
+
+class Solution {
+    public int[] topKFrequent(int[] nums, int k) {
+        if (nums == null || nums.length == 0 || k <= 0) {
+            return new int[0];
+        }
+        Map<Integer, Integer> numToCount = new HashMap<>();
+        for (int num : nums) {
+            numToCount.put(num, numToCount.getOrDefault(num, 0) + 1);
+        }
+        
+        List<Integer>[] counts = new List[nums.length + 1];
+        for (int num : numToCount.keySet()) {
+            int count = numToCount.get(num);
+            if (counts[count] == null) {
+                counts[count] = new ArrayList<>();
+            }
+            counts[count].add(num);
+        }
+        
+        int[] res = new int[k];
+        int i = 0;
+        for (int count = nums.length; count >= 0 && i < k; count--) {
+            List<Integer> list = counts[count];
+            if (list != null && list.size() != 0) {
+                for (int num : list) {
+                    res[i++] = num;
+                }
+            }
+        }
+        return res;
+    }
+}
+

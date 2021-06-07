@@ -1,0 +1,13 @@
+220. Contains Duplicate III
+主要就是这一题，在 https://leetcode.com/problems/contains-duplicate-ii/ 里面，是用一个set来存 k 范围内的所有数值。
+这里要求的是k范围内，值可以正负t。
+
+我的思路顺着II，想的是仍然用set存k范围内nums[i]的所有数值，然后从 nums[i] - t 到 nums[i] + t 一个一个int去比较，看在不在set里。
+这样的时间复杂度是  n*2*t
+
+常用的另一种方法，是用双向链表存k范围内的nums[i]，然后遍历链表，看有没有哪一个数值在nums[i] - t 到 nums[i] + t 范围内。
+这样的时间复杂度是 n*k
+特别注意，因为会用到num[i] - t， 和 + t。这时候要考虑到integer溢出的状况。
+
+
+这里要记住，但凡这种要用到范围的，可以用Tree来解决，这样找范围是log k，而不是k。

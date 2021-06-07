@@ -1,0 +1,46 @@
+// 这一题跟 354. Russian Doll Envelopes 基本上一样的，后者稍微复杂了一点点而已。
+
+// 很容易想到的dp解法，这样就是n^2的时间复杂度，n的空间复杂度。
+class Solution {
+    public int lengthOfLIS(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            return 0;
+        }
+        int maxLen = 1;
+        int[] dp = new int[nums.length];
+        for (int i = 0; i < nums.length; i++) {
+            // very important, for a new start sequence. e.g. [10,9,2,5,3,7,101,18], without following line, will return wrong answer
+            dp[i] = 1;
+            for (int j = 0; j < i; j++) {
+                if (nums[j] < nums[i]) {
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                }
+            }
+            maxLen = Math.max(maxLen, dp[i]);
+        }
+        return maxLen;
+    }
+}
+
+// 一直看不懂所谓的binary search的解法。直到看了花花酱的视频讲解才明白怎么回事。其实本质就还是跟334. Increasing Triplet Subsequence，这样的题目差不多，优化里面那个j的for循环，降低时间复杂度。看是不是多算了，有没有办法可以通过存一些变量，减少计算量。
+// 如果有两个同样长度为3的序列，[1,2,8] 和 [3,4,5]，肯定是[3,4,5]更好，我们只需要track [3,4,5] 就行了，没必要继续track [1,2,8]. 比方说，后面又遇到了一个数字6，则6放在[3,4,5]后面可以组成一个长度为4的序列，而[1,2,8]则不行。同理，[1,2,5] 和[3,4,5]没有区别，我们只看最后一个数字。
+
+// 这里把dp数组的定义改一下，用dp数组的index，表示count，也就是之前序列的长度，dp[i]表示，长度为i+1的序列，可能有很多个序列，但是我们存最后一个数字，最小的。这时候，数组里面的数字，肯定是从小到大排列的，不可能出现，[1,5,3]的情况。 这时候意味着有一个序列，长度是2，结尾是5。但是我们可以找到一个长度是3，结尾是3的序列，那么肯定存在一个序列长度为2，结尾小于3。因为这样把3放在该序列后面，才能构成长度为3的序列。此时此刻，我们应该早就把index 1 里的数字更新成比3小的那个数字，而不可能是5.
+// 因为有这个顺序在，所以可以用二分查找，binary search。
+public class Solution {
+    public int lengthOfLIS(int[] nums) {
+        int[] dp = new int[nums.length];
+        int len = 0;
+        for (int num : nums) {
+            int i = Arrays.binarySearch(dp, 0, len, num);
+            if (i < 0) {
+                i = -(i + 1);
+            }
+            dp[i] = num;
+            if (i == len) {
+                len++;
+            }
+        }
+        return len;
+    }
+}
