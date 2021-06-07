@@ -1,0 +1,13 @@
+两个binary相加。FB常考题目。
+用Bit Manipulation做，不会做的时候，都从XOR，^开始。也就是两个位数相同取0，不同取1.
+取XOR后，是忽略进位后的结果，考虑进位，就在a & b, 然后<< 左移一位，就行了。
+比如这个例子，a=1111,b=0010. 
+a^b = 1101. a&b = 0010, 左移后是0100. 然后重复上述步骤，把两个相加。
+a2 = 1101, b2 = 0100. 这样循环下去。
+
+class Solution:
+    def addBinary(self, a, b) -> str:
+        x, y = int(a, 2), int(b, 2)
+        while y:
+            x, y = x ^ y, (x & y) << 1
+        return bin(x)[2:]

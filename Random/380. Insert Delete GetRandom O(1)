@@ -1,0 +1,57 @@
+// 思路比较容易想到，比较经典的数据结构题目。很多边界条件易错。比如insert第一个的时候，当list里面只有1个element，要remove的时候。
+
+class RandomizedSet {
+
+    private List<Integer> list;
+    private Map<Integer, Integer> valToIndex;
+    private Random random;
+    
+    /** Initialize your data structure here. */
+    public RandomizedSet() {
+        this.list = new ArrayList<>();
+        this.valToIndex = new HashMap<>();
+        this.random = new Random();
+    }
+    
+    /** Inserts a value to the set. Returns true if the set did not already contain the specified element. */
+    public boolean insert(int val) {
+        if (valToIndex.containsKey(val)) {
+            return false;
+        }
+        valToIndex.put(val, list.size());
+        list.add(val);
+        return true;
+    }
+    
+    /** Removes a value from the set. Returns true if the set contained the specified element. */
+    public boolean remove(int val) {
+        if (!valToIndex.containsKey(val)) {
+            return false;
+        }
+        int index = valToIndex.get(val), lastVal = list.get(list.size()-1);
+        list.set(index, lastVal);
+        // 易错点两个。1，要在valToIndex里面update lastVal的index，这个容易忘记。2，要考虑到，如果list里面只有一个val，valToIndex的remove要在put之后。
+        valToIndex.put(lastVal, index);
+        valToIndex.remove(val);
+        list.remove(list.size()-1);
+        return true;
+    }
+    
+    /** Get a random element from the set. */
+    public int getRandom() {
+        if (list.size() == 1) {
+            return list.get(0);
+        }
+        // Random nextInt是上限，不包括输入的这个值。
+        int index = random.nextInt(list.size());
+        return list.get(index);
+    }
+}
+
+/**
+ * Your RandomizedSet object will be instantiated and called as such:
+ * RandomizedSet obj = new RandomizedSet();
+ * boolean param_1 = obj.insert(val);
+ * boolean param_2 = obj.remove(val);
+ * int param_3 = obj.getRandom();
+ */

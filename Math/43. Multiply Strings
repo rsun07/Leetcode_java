@@ -1,0 +1,68 @@
+// 这一题还是要仔细分析，乘法，用计算机的思维，每次只取一个char相乘，放到指定位置。
+
+//2021年2月的答案。
+// 999*99 最多5位数，101*10，4位数。所以最多就是两个长度之和位数
+// 数字，从右往左从0开始编号，记住，从右往左编号。结果也是要从右往左编号。每次找出两个数字相乘的结果，加到结果上，也是结果从右往左编号，两个数字编号的和的index，开始加
+class Solution {
+    public String multiply(String num1, String num2) {
+        if (num1 == null || num2 == null || num1.length() == 0 || num2.length() == 0 || "0".equals(num1) || "0".equals(num2)) {
+            return "0";
+        }
+        int n1 = num1.length(), n2 = num2.length(), n = n1+n2;
+        int[] res = new int[n];
+        for (int i1 = 0; i1 < n1; i1++) {
+            int digit1 = Character.getNumericValue(num1.charAt(i1));
+            for (int i2 = 0; i2 < n2; i2++) {
+                int digit2 = Character.getNumericValue(num2.charAt(i2));
+                int product = digit1 * digit2;
+                int i = (n - ((n1-i1-1) + (n2-i2-1)) - 1);
+                int carry = 0;
+                // 因为这里是实际上从左往右走，所以可能涉及到一直进位进位到最高位的情况。下面一种解法，是从右往左走，就不存在一直进位的情况，所以不需要这个while循环。
+                while (product > 0 || carry > 0) {
+                    int digit = product % 10;
+                    int localSum = digit + carry + res[i];
+                    res[i] = localSum % 10;
+                    carry = localSum / 10;
+                    product /= 10;
+                    i--;
+                }
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        while (res[i] == 0) {
+            i++;
+        }
+        for (; i < res.length; i++) {
+            sb.append(res[i]);
+        }
+        return sb.toString();
+    }
+}
+
+
+// 2020年的答案
+class Solution {
+    public String multiply(String num1, String num2) {
+        int[] digits = new int[num1.length() + num2.length()];
+        for (int i = num1.length() - 1; i >= 0; i--) {
+            int n1 = Character.getNumericValue(num1.charAt(i));
+            for (int j = num2.length() - 1; j >= 0; j--) {
+                int n2 = Character.getNumericValue(num2.charAt(j));
+                int num = n1 * n2 + digits[i+j+1];
+                digits[i+j+1] = num%10;
+                digits[i+j] += num/10;
+            }
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for (int digit : digits) {
+            if (sb.length() == 0 && digit == 0) 
+                continue;
+            sb.append(digit);
+        }
+        if (sb.length() == 0)
+            sb.append(0);
+        return sb.toString();
+    }
+}

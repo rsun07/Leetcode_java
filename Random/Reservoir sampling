@@ -1,0 +1,15 @@
+参看382. Linked List Random Node，398. Random Pick Index
+
+// 输入是一个数组int[] nums. target 在数组里可能有多个。要求随机返回，每一个返回的概率要一样大。算法的本质就是，概率是由count的总数决定的。random.nextInt(++count) == 0、是解题的关键
+
+    public int pick(int target) {
+        int count = 0, index = -1;
+        for (int i = 0; i < nums.length; i++) {
+        	// 第一个肯定会被取，因为概率是100%，random.nextInt(1) 只能返回0。 第二个就是二分之一的概率了。
+            if (nums[i] == target && random.nextInt(++count) == 0)
+                index = i;
+        }
+        return index;
+    }
+
+// 这一题在382更适用，输入是LinkedList。尤其是当follow up问，当长度无穷大，或者之间说不允许用extra space的情况下。

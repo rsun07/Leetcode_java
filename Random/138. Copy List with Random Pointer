@@ -1,0 +1,73 @@
+// 这是leetcode出的一本书里面的经典题目。很容易出错，第一次做，容易把copy list里面的random指向原来的list里面的node。我2021年1月再做，还是出错，错的是跟第一次做的相反。创建了新的Node，或者是在创建copy的时候没有及时放到Map里面，或者是在创建了random copy以后忘记放到Map里，造成重复创建
+
+/*
+// Definition for a Node.
+class Node {
+    int val;
+    Node next;
+    Node random;
+
+    public Node(int val) {
+        this.val = val;
+        this.next = null;
+        this.random = null;
+    }
+}
+*/
+
+class Solution {
+    public Node copyRandomList(Node head) {
+        Map<Node, Node> nodeToCopy = new HashMap<>();
+        Node dummyHead = new Node(0), copyHead = dummyHead;
+        while (head != null) {
+            Node copy = nodeToCopy.getOrDefault(head, new Node(head.val));
+            copyHead.next = copy;
+            nodeToCopy.put(head, copy);
+            if (head.random != null) {
+                Node copyRandom = nodeToCopy.getOrDefault(head.random, new Node(head.random.val));
+                nodeToCopy.put(head.random, copyRandom);
+                copy.random = copyRandom;
+            }
+            head = head.next;
+            copyHead = copyHead.next;
+        }
+        return dummyHead.next;
+    }
+}
+
+// 2020年年初的解法，更不容易出错。
+/*
+// Definition for a Node.
+class Node {
+    int val;
+    Node next;
+    Node random;
+
+    public Node(int val) {
+        this.val = val;
+        this.next = null;
+        this.random = null;
+    }
+}
+*/
+class Solution {
+    public Node copyRandomList(Node head) {
+        Map<Node, Node> nodeToCopy = new HashMap<>();
+        Node dummy = new Node(0), node = dummy;
+        while (head != null) {
+            node.next = getCopy(head, nodeToCopy);
+            node = node.next;
+            node.random = getCopy(head.random, nodeToCopy);
+            head = head.next;
+        }
+        return dummy.next;
+    }
+    
+    private Node getCopy(Node node, Map<Node, Node> nodeToCopy) {
+        if (node == null) return null;
+        if (nodeToCopy.containsKey(node)) return nodeToCopy.get(node);
+        Node copy = new Node(node.val);
+        nodeToCopy.put(node, copy);
+        return copy;
+    }
+}

@@ -1,0 +1,142 @@
+// 这一题主要就是考Shuffle算法。两种办法，后一种的前一种的改良。特别注意，如果要保证random，瞎swap是不行的，不能数学证明。
+// 第一种办法，是随机选取index，用过的不能再用，每次选出来以后，把index对应的数字放到新数组的最前面。这种有多种实现方法，一种lc的答案，是建立一个arrayList，然后随机取【0，size）index。取完删掉index。要n^2 因为arraylist删除需要O(n)。 你可能会想，用一个boolean或者set来把删除了的做标记。这样random出来的结果就不一定合法，可能需要random很多次，同样也是n^2
+
+// 第二种方法便是改良后的。就是一个指针i，从0到n-1. 每次从i(对，可以是i自己)到n-1之间，找一个数字和i所在的数字shuffle。证明我也不懂，数学证明。但是这样就是上一种的改良，可以O(n)实现。
+
+// 两种方法都要特别注意以下几点：1. Java a.clone，可以hard copy array。2. 刚开始和shuffle，reset之前，每次都要记得把original clone一次，不能丢掉原始记录。
+
+class Solution {
+    private int[] array;
+    private int[] original;
+
+    private Random rand = new Random();
+
+    private List<Integer> getArrayCopy() {
+        List<Integer> asList = new ArrayList<Integer>();
+        for (int i = 0; i < array.length; i++) {
+            asList.add(array[i]);
+        }
+        return asList;
+    }
+
+    public Solution(int[] nums) {
+        array = nums;
+        original = nums.clone();
+    }
+    
+    public int[] reset() {
+        array = original;
+        original = original.clone();
+        return array;
+    }
+    
+    public int[] shuffle() {
+        List<Integer> aux = getArrayCopy();
+
+        for (int i = 0; i < array.length; i++) {
+            int removeIdx = rand.nextInt(aux.size());
+            array[i] = aux.get(removeIdx);
+            aux.remove(removeIdx);
+        }
+
+        return array;
+    }
+}
+
+
+class Solution {
+    private int[] array;
+    private int[] original;
+
+    Random rand = new Random();
+
+    private int randRange(int min, int max) {
+        return rand.nextInt(max - min) + min;
+    }
+
+    private void swapAt(int i, int j) {
+        int temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+
+    public Solution(int[] nums) {
+        array = nums;
+        original = nums.clone();
+    }
+    
+    public int[] reset() {
+        array = original;
+        original = original.clone();
+        return original;
+    }
+    
+    public int[] shuffle() {
+        for (int i = 0; i < array.length; i++) {
+            swapAt(i, randRange(i, array.length));
+        }
+        return array;
+    }
+}
+
+// 我的解法，2020年3月。
+class Solution {
+
+    private int[] nums;
+    private Random random;
+    public Solution(int[] nums) {
+        this.nums = nums;
+        this.random = new Random();
+    }
+    
+    /** Resets the array to its original configuration and return it. */
+    public int[] reset() {
+        return nums;
+    }
+    
+    /** Returns a random shuffling of the array. */
+    public int[] shuffle() {
+        Set<Integer> indexes = new HashSet<>();
+        int[] shuffle = new int[nums.length];
+        for (int num : nums) {
+            int index;
+            do {
+                index = random.nextInt(nums.length);
+            } while (indexes.contains(index));
+            shuffle[index] = num;
+            indexes.add(index);
+        }
+        return shuffle;
+    }
+}
+
+
+// 2021年2月
+class Solution {
+
+    private int[] nums;
+    private Random random; 
+    
+    public Solution(int[] nums) {
+        this.nums = nums;
+        this.random = new Random();
+    }
+    
+    /** Resets the array to its original configuration and return it. */
+    public int[] reset() {
+        return nums;
+    }
+    
+    /** Returns a random shuffling of the array. */
+    public int[] shuffle() {
+        int[] copy = nums.clone();
+        for (int i = 0; i < copy.length; i++) {
+            // j should be [i, copy.length-i]
+            int j = random.nextInt(copy.length - i) + i;
+            int temp = copy[j];
+            copy[j] = copy[i];
+            copy[i] = temp;
+        }
+        return copy;
+    }
+}

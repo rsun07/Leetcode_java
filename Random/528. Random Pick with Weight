@@ -1,0 +1,94 @@
+// 我想到的最naive的解法，内存限制超过了。
+class Solution {
+
+    private List<Integer> list;
+    private Random random;
+    
+    public Solution(int[] w) {
+        this.list = new ArrayList<>();
+        this.random = new Random();
+        for (int i = 0; i < w.length; i++) {
+            for (int j = 0; j < w[i]; j++) {
+                list.add(i);
+            }
+        }
+    }
+    
+    public int pickIndex() {
+        int i = random.nextInt(list.size());
+        return list.get(i);
+    }
+}
+
+/**
+ * Your Solution object will be instantiated and called as such:
+ * Solution obj = new Solution(w);
+ * int param_1 = obj.pickIndex();
+ */
+
+
+ class Solution {
+
+    private int[] w;
+    private Random random;
+    private int totalCount;
+    
+    public Solution(int[] w) {
+        this.w = w;
+        this.random = new Random();
+        this.totalCount = 0;
+        for (int i = 0; i < w.length; i++) {
+            totalCount += w[i];
+        }
+    }
+    
+    public int pickIndex() {
+        int count = random.nextInt(totalCount);
+        int i = 0;
+        for (;i < w.length && count >= 0; i++) {
+            count -= w[i];
+        }
+        return i-1;
+    }
+}
+
+
+
+// 二分查找特别容易出错，最好的拿着一个例子，照着这个例子来写，假设w是[3,14,1,7], 那么我算出来的prefixSums就会是[3, 17, 18, 25]。注意，random是从0开始取值的，我这里如果3要赋值给0，则random必须从1开始取。
+
+class Solution {
+
+    private int[] prefixSums;
+    private Random random;
+    private int upperBound;
+    
+    public Solution(int[] w) {
+        this.random = new Random();
+        this.prefixSums = new int[w.length];
+        int pre = 0;
+        for (int i = 0; i < w.length; i++) {
+            prefixSums[i] = pre + w[i];
+            pre = prefixSums[i];
+        }
+        this.upperBound = prefixSums[w.length - 1];
+    }
+    
+    public int pickIndex() {
+        int count = random.nextInt(upperBound) + 1;
+        int lo = 0, hi = prefixSums.length - 1;
+        while (lo < hi) {
+            int mid = lo + (hi-lo)/2;
+            if (prefixSums[mid] == count) {
+                return mid;
+            } else if (prefixSums[mid] < count) {
+                lo = mid + 1;
+            } else {
+                if (mid == 0 || prefixSums[mid-1] < count) {
+                    return mid;
+                }
+                hi = mid - 1;
+            }
+        }
+        return lo;
+    }
+}

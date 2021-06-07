@@ -1,0 +1,167 @@
+// 这一题，其实是所有数学题最重要的一点，就是overflow怎么处理。尤其要记住，Integer.MIN_VALUE 比 MAX_VALUE的绝对值多1. -Integer.MIN_VALUE 会overflow，-Integer.MAX_VALUE 不会。
+// Facebook 好像很喜欢类似的题目。
+
+// 犯了上面的错误，overflow完全没考虑到
+class Solution {
+    public int divide(int dividend, int divisor) {
+        if (divisor == 0) {
+            throw new IllegalArgumentException("Divosor cannot be 0");
+        }
+        if (dividend == 0) {
+            return 0;
+        }
+        boolean isNeg = false;
+        if (dividend < 0) {
+            isNeg = !isNeg;
+            dividend = -dividend;
+        }
+        if (divisor < 0) {
+            isNeg = !isNeg;
+            divisor = -divisor;
+        }
+        int res = 0;
+        while (dividend >= divisor) {
+            res++;
+            dividend -= divisor;
+        }
+        return isNeg ? -res : res;
+    }
+}
+
+// 处理了一些边界条件，用负数来进行操作以避免出现输入等于-Integer.MIN_VALUE overflow. 会超时。
+class Solution {
+    public int divide(int dividend, int divisor) {
+        if (divisor == 0) {
+            throw new IllegalArgumentException("Divosor cannot be 0");
+        }
+        if (dividend == 0) {
+            return 0;
+        }
+        if (dividend == Integer.MIN_VALUE && divisor == -1) {
+            return Integer.MAX_VALUE;
+        }
+        boolean isNeg = false;
+        if (dividend > 0) {
+            dividend = -dividend;
+        } else {
+            isNeg = !isNeg;
+        }
+        if (divisor > 0) {
+            divisor = -divisor;
+        } else {
+            isNeg = !isNeg;
+        }
+        int res = 0;
+        while (dividend <= divisor) {
+            res++;
+            dividend -= divisor;
+        }
+        return isNeg ? -res : res;
+    }
+}
+
+
+// 仍然超时
+class Solution {
+    public int divide(int dividend, int divisor) {
+        if (divisor == 0) {
+            throw new IllegalArgumentException("Divosor cannot be 0");
+        }
+        if (dividend == 0) {
+            return 0;
+        }
+        if (dividend == Integer.MIN_VALUE && divisor == -1) {
+            return Integer.MAX_VALUE;
+        }
+        if (divisor == 1) {
+            return dividend;
+        }
+        if (divisor == -1) {
+            return -dividend;
+        }
+        boolean isNeg = false;
+        if (dividend > 0) {
+            dividend = -dividend;
+        } else {
+            isNeg = !isNeg;
+        }
+        if (divisor > 0) {
+            divisor = -divisor;
+        } else {
+            isNeg = !isNeg;
+        }
+        
+        if (dividend > divisor) {
+            return 0;
+        }
+        
+        int res = 1, divisorMulti = divisor;
+        while (dividend <= divisorMulti + divisorMulti) {
+            res += res;
+            divisorMulti += divisorMulti;
+        }
+        
+        dividend -= divisorMulti;
+        
+        while (dividend <= divisor) {
+            res++;
+            dividend -= divisor;
+        }
+        return isNeg ? -res : res;
+    }
+}
+
+// 太多地方可能overflow，要特别注意特别注意。
+
+class Solution {
+    public int divide(int dividend, int divisor) {
+        if (divisor == 0) {
+            throw new IllegalArgumentException("Divosor cannot be 0");
+        }
+        if (dividend == 0) {
+            return 0;
+        }
+        if (dividend == Integer.MIN_VALUE && divisor == -1) {
+            return Integer.MAX_VALUE;
+        }
+        if (divisor == 1) {
+            return dividend;
+        }
+        if (divisor == -1) {
+            return -dividend;
+        }
+        boolean isNeg = false;
+        if (dividend > 0) {
+            dividend = -dividend;
+        } else {
+            isNeg = !isNeg;
+        }
+        if (divisor > 0) {
+            divisor = -divisor;
+        } else {
+            isNeg = !isNeg;
+        }
+        
+        if (dividend > divisor) {
+            return 0;
+        }
+        
+        int res = 0, divisorMulti = divisor, powerOfTwo = 1;
+        // divisorMulti + divisorMulti could overflow
+        while (dividend <= divisorMulti) {
+            res += powerOfTwo;
+            powerOfTwo += powerOfTwo;
+            dividend -= divisorMulti;
+            if (divisorMulti <= Integer.MIN_VALUE / 2) {
+                break;
+            }
+            divisorMulti += divisorMulti;
+        }
+                
+        while (dividend <= divisor) {
+            res++;
+            dividend -= divisor;
+        }
+        return isNeg ? -res : res;
+    }
+}

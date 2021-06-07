@@ -1,0 +1,32 @@
+// 经典题。这题是精华就在于这一个例子 2^10 = (2^2)^5 = 4^5 = 4*(4^4) = 4 * (16^2)。 能够理解这一点，就作对了一大半。剩下不到一半，就是处理n<0的情况，overflow的特殊情况处理。
+
+class Solution { 
+    public double myPow(double x, int n) {
+        if (n == 0) {
+            return 1.0;
+        }
+        if (n == 1) {
+            return x;
+        }
+        if (n < 0) {
+            // if n == Integer.MIN_VALUE, overflow will happen, need to avoid it
+            x = 1.0 / x;
+            if (n == Integer.MIN_VALUE) {
+                return x * myPowHelper(x, Integer.MAX_VALUE);
+            }
+            return myPowHelper(x, -n);
+        }
+        return myPowHelper(x, n);
+    }
+    
+    private double myPowHelper(double x, int n) {
+        if (n == 1) {
+            return x;
+        }
+        if (n % 2 == 0) {
+            return myPowHelper(x*x, n/2);
+        } else {
+            return x * myPowHelper(x, n-1);
+        }
+    }
+}
